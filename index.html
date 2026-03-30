@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI SEO監査 | 無料診断でサイトの課題を発見</title>
+    <meta name="description" content="AIがあなたのサイトを監査。SEO + LLMO（AI検索最適化）に対応した自動監査サービス。無料診断で主要問題トップ5を即座に把握。">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', 'Noto Sans CJK JP', sans-serif;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            line-height: 1.8;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        header {
+            padding: 20px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        
+        .logo span {
+            color: #6366f1;
+        }
+        
+        /* Hero */
+        .hero {
+            padding: 80px 0;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        
+        .hero h1 span {
+            color: #6366f1;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            color: #a0a0a0;
+            margin-bottom: 40px;
+        }
+        
+        .cta-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            padding: 16px 40px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+        
+        /* Features */
+        .features {
+            padding: 60px 0;
+            background: #1a1a1a;
+        }
+        
+        .features h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 40px;
+            color: #fff;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        
+        .feature-card {
+            background: #252525;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+        
+        .feature-card p {
+            color: #a0a0a0;
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+        
+        /* Pricing */
+        .pricing {
+            padding: 80px 0;
+        }
+        
+        .pricing h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 40px;
+            color: #fff;
+        }
+        
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .pricing-card {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        
+        .pricing-card.featured {
+            border: 2px solid #6366f1;
+            position: relative;
+        }
+        
+        .pricing-card.featured::before {
+            content: '人気';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #6366f1;
+            color: #fff;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        
+        .pricing-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        
+        .pricing-card .price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #6366f1;
+            margin-bottom: 20px;
+        }
+        
+        .pricing-card .price span {
+            font-size: 1rem;
+            color: #a0a0a0;
+        }
+        
+        .pricing-card ul {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 25px;
+        }
+        
+        .pricing-card ul li {
+            padding: 8px 0;
+            color: #a0a0a0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .pricing-card ul li:last-child {
+            border-bottom: none;
+        }
+        
+        .pricing-card .btn {
+            display: block;
+            background: #333;
+            color: #fff;
+            padding: 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        
+        .pricing-card.featured .btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        }
+        
+        .pricing-card .btn:hover {
+            opacity: 0.9;
+        }
+        
+        /* Form Section */
+        .form-section {
+            padding: 80px 0;
+            background: #1a1a1a;
+        }
+        
+        .form-section h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+        
+        .form-section > .container > p {
+            text-align: center;
+            color: #a0a0a0;
+            margin-bottom: 40px;
+        }
+        
+        .audit-form {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #252525;
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 14px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            padding: 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .submit-btn:hover {
+            opacity: 0.9;
+        }
+        
+        /* FAQ */
+        .faq {
+            padding: 80px 0;
+        }
+        
+        .faq h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 40px;
+            color: #fff;
+        }
+        
+        .faq-item {
+            background: #1a1a1a;
+            margin-bottom: 15px;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        
+        .faq-item h3 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+        
+        .faq-item p {
+            color: #a0a0a0;
+        }
+        
+        /* Footer */
+        footer {
+            padding: 40px 0;
+            border-top: 1px solid #2a2a2a;
+            text-align: center;
+            color: #666;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            
+            .hero p {
+                font-size: 1rem;
+            }
+            
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">AI<span>SEO</span>監査</div>
+        </div>
+    </header>
+    
+    <section class="hero">
+        <div class="container">
+            <h1>サイトの課題を<span>60秒</span>で発見</h1>
+            <p>AIがあなたのサイトを監査。SEO + LLMO（AI検索最適化）に対応。<br>無料診断で主要問題トップ5を即座に把握。</p>
+            <a href="#free-audit" class="cta-btn">今すぐ無料診断</a>
+        </div>
+    </section>
+    
+    <section class="features">
+        <div class="container">
+            <h2>なぜ AI SEO監査 なのか？</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI自動監査</h3>
+                    <p>最新のAI技術で64項目を自動チェック。手動監査なら数日かかる作業を数分で完了。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>SEO + LLMO対応</h3>
+                    <p>従来のSEOだけでなく、ChatGPT/Perplexity等のAI検索での表示対策も対応。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3>圧倒的な低価格</h3>
+                    <p>市場価格の1/10以下。自動化により高品質な監査を低価格で提供。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="pricing">
+        <div class="container">
+            <h2>料金プラン</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>無料診断</h3>
+                    <div class="price">¥0<span></span></div>
+                    <ul>
+                        <li>SEOスコア</li>
+                        <li>LLMOスコア</li>
+                        <li>主要問題トップ5（概要）</li>
+                        <li>改善効果の目安</li>
+                    </ul>
+                    <a href="#free-audit" class="btn">無料で試す</a>
+                </div>
+                <div class="pricing-card">
+                    <h3>お試し</h3>
+                    <div class="price">¥4,980<span></span></div>
+                    <ul>
+                        <li>無料診断の全内容</li>
+                        <li>主要問題トップ5の詳細</li>
+                        <li>修正方法のヒント</li>
+                    </ul>
+                    <a href="#" class="btn">このプランで始める</a>
+                </div>
+                <div class="pricing-card featured">
+                    <h3>スタンダード</h3>
+                    <div class="price">¥9,800<span></span></div>
+                    <ul>
+                        <li>完全レポート（64項目）</li>
+                        <li>各問題の詳細説明</li>
+                        <li>コピペ修正プロンプト</li>
+                        <li>here.now + Google Drive提供</li>
+                    </ul>
+                    <a href="#" class="btn">このプランで始める</a>
+                </div>
+                <div class="pricing-card">
+                    <h3>ビジネス</h3>
+                    <div class="price">¥79,800<span></span></div>
+                    <ul>
+                        <li>スタンダードの全内容</li>
+                        <li>修正実装代行</li>
+                        <li>月次PDCA支援</li>
+                        <li>優先サポート</li>
+                    </ul>
+                    <a href="#" class="btn">お問い合わせ</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="form-section" id="free-audit">
+        <div class="container">
+            <h2>無料診断を始める</h2>
+            <p>サイトURLを入力するだけ。60秒で結果をお届け。</p>
+            <form class="audit-form">
+                <div class="form-group">
+                    <label for="url">サイトURL</label>
+                    <input type="url" id="url" name="url" placeholder="https://example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">メールアドレス</label>
+                    <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="industry">業種（任意）</label>
+                    <select id="industry" name="industry">
+                        <option value="">選択してください</option>
+                        <option value="restaurant">飲食店</option>
+                        <option value="beauty">美容・理容</option>
+                        <option value="medical">医療・福祉</option>
+                        <option value="retail">小売</option>
+                        <option value="service">サービス業</option>
+                        <option value="other">その他</option>
+                    </select>
+                </div>
+                <button type="submit" class="submit-btn">無料診断を開始</button>
+            </form>
+        </div>
+    </section>
+    
+    <section class="faq">
+        <div class="container">
+            <h2>よくある質問</h2>
+            <div class="faq-item">
+                <h3>LLMOとは何ですか？</h3>
+                <p>LLMO（Large Language Model Optimization）は、ChatGPTやPerplexityなどのAI検索であなたのサイトが引用されるための最適化です。従来のSEOだけでは不十分になりつつあります。</p>
+            </div>
+            <div class="faq-item">
+                <h3>監査結果はどのくらいで届きますか？</h3>
+                <p>無料診断は即座に結果を表示。有料プランは通常24時間以内に詳細レポートをお届けします。</p>
+            </div>
+            <div class="faq-item">
+                <h3>WordPress以外のサイトも監査できますか？</h3>
+                <p>はい。どのようなCMSや静的サイトでも監査可能です。</p>
+            </div>
+            <div class="faq-item">
+                <h3>修正は自分でできますか？</h3>
+                <p>スタンダードプランでは「コピペ修正プロンプト」を提供。自分で修正する場合はこのプロンプトを使って簡単に実装できます。ビジネスプランでは代行も可能です。</p>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 AI SEO監査. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
