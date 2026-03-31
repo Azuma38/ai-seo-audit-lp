@@ -445,7 +445,7 @@
         <div class="container">
             <h2>無料診断を始める</h2>
             <p>サイトURLを入力するだけ。60秒で結果をお届け。</p>
-            <form class="audit-form">
+            <form class="audit-form" id="auditForm">
                 <div class="form-group">
                     <label for="url">サイトURL</label>
                     <input type="url" id="url" name="url" placeholder="https://example.com" required>
@@ -498,5 +498,43 @@
             <p>&copy; 2026 AI SEO監査. All rights reserved.</p>
         </div>
     </footer>
+
+    <script>
+        const form = document.getElementById('auditForm');
+        const submitBtn = form.querySelector('.submit-btn');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const url = document.getElementById('url').value;
+            const email = document.getElementById('email').value;
+            const industry = document.getElementById('industry').value;
+            
+            submitBtn.textContent = '送信中...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/audit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, email, industry })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    submitBtn.textContent = '✓ 申込み完了';
+                    submitBtn.style.background = '#10b981';
+                    alert('監査リクエストを受け付けました。\n結果は24時間以内にお送りします。');
+                } else {
+                    throw new Error(result.error || 'エラーが発生しました');
+                }
+            } catch (error) {
+                submitBtn.textContent = '無料診断を開始';
+                submitBtn.disabled = false;
+                alert('エラー: ' + error.message);
+            }
+        });
+    </script>
 </body>
 </html>

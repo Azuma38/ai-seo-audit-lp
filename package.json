@@ -1,0 +1,13 @@
+{
+  "name": "ai-seo-audit-lp",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@vercel/node": "^3.0.0",
+    "typescript": "^5.0.0"
+  }
+}
