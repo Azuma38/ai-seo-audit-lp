@@ -9,6 +9,8 @@
     <script src="https://www.google.com/recaptcha/api.js?render=6LeZ4aAsAAAAAI3uD7Z2j-MGjRWAVARoy32vgumz"></script>
     <!-- FingerprintJS -->
     <script src="https://openfpcdn.io/fingerprintjs/v4"></script>
+    <!-- PAY.JP -->
+    <script src="https://js.pay.jp/" async></script>
     <style>
         * {
             margin: 0;
@@ -452,6 +454,15 @@
             <p style="font-size: 0.9rem; color: #888; margin-bottom: 30px;">※監査自体はAIが高速で処理しますが、専門家による最終確認を経て結果をお届けするため、ご報告までにお時間をいただいております。</p>
             <form class="audit-form" id="auditForm">
                 <div class="form-group">
+                    <label for="plan">プラン選択</label>
+                    <select id="plan" name="plan" required>
+                        <option value="free">無料診断（¥0）</option>
+                        <option value="trial">お試し（¥4,980）</option>
+                        <option value="standard">スタンダード（¥9,800）</option>
+                        <option value="business">ビジネス（¥79,800）※お問い合わせ</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="url">サイトURL</label>
                     <input type="url" id="url" name="url" placeholder="https://example.com" required>
                 </div>
@@ -471,7 +482,14 @@
                         <option value="other">その他</option>
                     </select>
                 </div>
-                <button type="submit" class="submit-btn">無料診断を開始</button>
+                <!-- カード情報（有料プランのみ表示） -->
+                <div id="cardSection" style="display: none;">
+                    <div class="form-group">
+                        <label>カード情報</label>
+                        <div id="cardElement" style="padding: 14px; background: #fff; border: 1px solid #d1d5db; border-radius: 6px;"></div>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn" id="submitBtn">無料診断を開始</button>
             </form>
         </div>
     </section>
@@ -506,7 +524,20 @@
 
     <script>
         const form = document.getElementById('auditForm');
-        const submitBtn = form.querySelector('.submit-btn');
+        const submitBtn = document.getElementById('submitBtn');
+        const planSelect = document.getElementById('plan');
+        const cardSection = document.getElementById('cardElement');
+        
+        // プラン価格
+        const planPrices = {
+            free: 0,
+            trial: 4980,
+            standard: 9800,
+            business: 79800
+        };
+        
+        // PAY.JPカード要素
+        let card = null;
         
         // Fingerprint取得
         let visitorId = '';
@@ -520,24 +551,73 @@
             }
         })();
         
+        // プラン選択時の処理
+        planSelect.addEventListener('change', (e) => {
+            const plan = e.target.value;
+            const price = planPrices[plan];
+            
+            if (plan === 'business') {
+                alert('ビジネスプランはお問い合わせください。\nTelegram: @azuma38');
+                planSelect.value = 'free';
+                return;
+            }
+            
+            if (price > 0) {
+                document.getElementById('cardSection').style.display = 'block';
+                submitBtn.textContent = `¥${price.toLocaleString()}で監査を開始`;
+                
+                // PAY.JPカード要素を初期化
+                if (!card && Payjp) {
+                    Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
+                    const elements = Payjp.elements();
+                    card = elements.create('card');
+                    card.mount('#cardElement');
+                }
+            } else {
+                document.getElementById('cardSection').style.display = 'none';
+                submitBtn.textContent = '無料診断を開始';
+            }
+        });
+        
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const plan = planSelect.value;
             const url = document.getElementById('url').value;
             const email = document.getElementById('email').value;
             const industry = document.getElementById('industry').value;
             
-            submitBtn.textContent = '送信中...';
             submitBtn.disabled = true;
+            submitBtn.textContent = '送信中...';
             
             try {
                 // reCAPTCHA v3 トークン取得
                 const recaptchaToken = await grecaptcha.execute('6LeZ4aAsAAAAAI3uD7Z2j-MGjRWAVARoy32vgumz', {action: 'submit'});
                 
-                const response = await fetch('/api/audit', {
+                // 有料プランの場合はカードトークン取得
+                let payjpToken = null;
+                if (planPrices[plan] > 0 && card) {
+                    const tokenResult = await new Promise((resolve, reject) => {
+                        Payjp.createToken(card, (status, response) => {
+                            if (status === 200) {
+                                resolve(response.id);
+                            } else {
+                                reject(new Error(response.error?.message || 'カード情報の取得に失敗しました'));
+                            }
+                        });
+                    });
+                    payjpToken = tokenResult;
+                }
+                
+                // APIに送信
+                const endpoint = planPrices[plan] > 0 ? '/api/checkout' : '/api/audit';
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url, email, industry, recaptchaToken, visitorId })
+                    body: JSON.stringify({ 
+                        plan, url, email, industry, 
+                        recaptchaToken, visitorId, payjpToken 
+                    })
                 });
                 
                 const result = await response.json();
@@ -545,12 +625,16 @@
                 if (result.success) {
                     submitBtn.textContent = '✓ 申込み完了';
                     submitBtn.style.background = '#10b981';
-                    alert('監査リクエストを受け付けました。\n結果は24時間以内にお送りします。');
+                    alert(planPrices[plan] > 0 
+                        ? `決済が完了しました。\n監査結果は24時間以内にお送りします。`
+                        : '監査リクエストを受け付けました。\n結果は24時間以内にお送りします。');
                 } else {
                     throw new Error(result.error || 'エラーが発生しました');
                 }
             } catch (error) {
-                submitBtn.textContent = '無料診断を開始';
+                submitBtn.textContent = planPrices[plan] > 0 
+                    ? `¥${planPrices[plan].toLocaleString()}で監査を開始` 
+                    : '無料診断を開始';
                 submitBtn.disabled = false;
                 alert('エラー: ' + error.message);
             }
