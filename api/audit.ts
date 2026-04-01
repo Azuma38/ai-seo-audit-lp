@@ -4,6 +4,14 @@ interface AuditRequest {
   url: string;
   email: string;
   industry?: string;
+  recaptchaToken?: string;
+}
+
+interface RecaptchaResponse {
+  success: boolean;
+  score: number;
+  action: string;
+  error_codes?: string[];
 }
 
 export default async function handler(
@@ -24,7 +32,7 @@ export default async function handler(
   }
 
   try {
-    const { url, email, industry } = req.body as AuditRequest;
+    const { url, email, industry, recaptchaToken } = req.body as AuditRequest;
 
     // Validation
     if (!url || !email) {
@@ -42,6 +50,35 @@ export default async function handler(
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: 'Invalid email' });
+    }
+
+    // reCAPTCHA v3 verification
+    if (recaptchaToken) {
+      const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY;
+      if (!recaptchaSecret) {
+        console.error('RECAPTCHA_SECRET_KEY is not set');
+        return res.status(500).json({ error: 'Server configuration error' });
+      }
+
+      const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${recaptchaSecret}&response=${recaptchaToken}`;
+      const verifyResponse = await fetch(verifyUrl, { method: 'POST' });
+      const verifyResult: RecaptchaResponse = await verifyResponse.json();
+
+      if (!verifyResult.success) {
+        console.error('reCAPTCHA verification failed:', verifyResult.error_codes);
+        return res.status(400).json({ error: 'reCAPTCHA verification failed' });
+      }
+
+      // Score threshold: 0.5 (0.0 = bot, 1.0 = human)
+      if (verifyResult.score < 0.5) {
+        console.error(`reCAPTCHA score too low: ${verifyResult.score}`);
+        return res.status(400).json({ error: 'Suspicious activity detected' });
+      }
+
+      console.log(`reCAPTCHA score: ${verifyResult.score}, action: ${verifyResult.action}`);
+    } else {
+      console.warn('No reCAPTCHA token provided');
+      return res.status(400).json({ error: 'reCAPTCHA token is required' });
     }
 
     // Send Telegram notification
