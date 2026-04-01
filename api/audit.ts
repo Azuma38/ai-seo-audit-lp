@@ -5,6 +5,7 @@ interface AuditRequest {
   email: string;
   industry?: string;
   recaptchaToken?: string;
+  visitorId?: string;
 }
 
 interface RecaptchaResponse {
@@ -32,7 +33,7 @@ export default async function handler(
   }
 
   try {
-    const { url, email, industry, recaptchaToken } = req.body as AuditRequest;
+    const { url, email, industry, recaptchaToken, visitorId } = req.body as AuditRequest;
 
     // Validation
     if (!url || !email) {
@@ -75,7 +76,7 @@ export default async function handler(
         return res.status(400).json({ error: 'Suspicious activity detected' });
       }
 
-      console.log(`reCAPTCHA score: ${verifyResult.score}, action: ${verifyResult.action}`);
+      console.log(`reCAPTCHA score: ${verifyResult.score}, action: ${verifyResult.action}, visitorId: ${visitorId || 'N/A'}`);
     } else {
       console.warn('No reCAPTCHA token provided');
       return res.status(400).json({ error: 'reCAPTCHA token is required' });
