@@ -10,7 +10,17 @@
     <!-- FingerprintJS -->
     <script src="https://openfpcdn.io/fingerprintjs/v4.js"></script>
     <!-- PAY.JP Checkout -->
-    <script src="https://checkout.pay.jp/"></script>
+    <script src="https://checkout.pay.jp/" async></script>
+    <script>
+        // PAY.JP Checkout読み込み待ち
+        function waitForPayjpCheckout(callback) {
+            if (typeof PayjpCheckout !== 'undefined') {
+                callback();
+            } else {
+                setTimeout(function() { waitForPayjpCheckout(callback); }, 100);
+            }
+        }
+    </script>
     <style>
         * {
             margin: 0;
@@ -558,20 +568,23 @@
             const planName = planNames[plan];
             currentPlan = plan;
 
-            // PAY.JP Checkout ポップアップを開く
-            PayjpCheckout.open({
-                key: 'pk_test_131a69a2129132d86012f6e1',
-                amount: amount,
-                currency: 'jpy',
-                title: planName,
-                onCreated: function(data) {
-                    // 決済成功
-                    submitPayment(data.token.id);
-                },
-                onFailed: function(err) {
-                    console.error('Checkout failed:', err);
-                    alert('決済に失敗しました');
-                }
+            // PAY.JP Checkout読み込み待ち
+            waitForPayjpCheckout(function() {
+                // PAY.JP Checkout ポップアップを開く
+                PayjpCheckout.open({
+                    key: 'pk_test_131a69a2129132d86012f6e1',
+                    amount: amount,
+                    currency: 'jpy',
+                    title: planName,
+                    onCreated: function(data) {
+                        // 決済成功
+                        submitPayment(data.token.id);
+                    },
+                    onFailed: function(err) {
+                        console.error('Checkout failed:', err);
+                        alert('決済に失敗しました');
+                    }
+                });
             });
         }
 
