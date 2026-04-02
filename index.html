@@ -496,7 +496,7 @@
             <p style="margin-bottom: 20px; color: #666;" id="modalPrice">¥4,980</p>
             <div class="form-group">
                 <label>カード情報</label>
-                <div id="cardElement" style="padding: 14px; background: #f5f5f5; border: 1px solid #d1d5db; border-radius: 6px;"></div>
+                <div id="cardElement" style="padding: 14px; background: #fff; border: 1px solid #d1d5db; border-radius: 6px; min-height: 40px;"></div>
             </div>
             <div class="form-group">
                 <label for="modalEmail">メールアドレス</label>
@@ -578,24 +578,44 @@
 
         function createAndMountCard() {
             if (typeof Payjp === 'undefined') {
+                console.log('Payjp not loaded, waiting...');
                 setTimeout(createAndMountCard, 100);
                 return;
             }
             
             const container = document.getElementById('cardElement');
-            container.innerHTML = '';
+            if (!container) {
+                console.error('cardElement container not found');
+                return;
+            }
             
-            payjpElements = Payjp.elements();
-            payjpCard = payjpElements.create('card', {
-                locale: 'ja',
-                style: {
-                    base: {
-                        fontSize: '16px',
-                        color: '#333'
+            container.innerHTML = '';
+            container.style.background = '#fff';
+            container.style.minHeight = '40px';
+            
+            try {
+                payjpElements = Payjp.elements();
+                payjpCard = payjpElements.create('card', {
+                    locale: 'ja',
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            fontFamily: '"Hiragino Sans", "Microsoft YaHei", sans-serif',
+                            color: '#333333',
+                            '::placeholder': {
+                                color: '#aab7c4'
+                            }
+                        },
+                        invalid: {
+                            color: '#e53e3e'
+                        }
                     }
-                }
-            });
-            payjpCard.mount('#cardElement');
+                });
+                payjpCard.mount('#cardElement');
+                console.log('Card element mounted successfully');
+            } catch (error) {
+                console.error('Error creating card element:', error);
+            }
         }
 
         // モーダルを開く
@@ -612,7 +632,7 @@
             document.getElementById('modalEmail').value = '';
             
             // モーダル表示後にカード要素を作成してマウント
-            setTimeout(createAndMountCard, 50);
+            setTimeout(createAndMountCard, 200);
         }
 
         // モーダルを閉じる
