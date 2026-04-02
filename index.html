@@ -9,8 +9,8 @@
     <script src="https://www.google.com/recaptcha/api.js?render=6LeZ4aAsAAAAAI3uD7Z2j-MGjRWAVARoy32vgumz"></script>
     <!-- FingerprintJS -->
     <script src="https://openfpcdn.io/fingerprintjs/v4.js"></script>
-    <!-- PAY.JP -->
-    <script src="https://js.pay.jp/v2/payjp.js"></script>
+    <!-- PAY.JP Checkout -->
+    <script src="https://checkout.pay.jp/"></script>
     <style>
         * {
             margin: 0;
@@ -488,25 +488,6 @@
         </div>
     </section>
     
-    <!-- 決済モーダル -->
-    <div id="paymentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-        <div style="background: #fff; padding: 30px; border-radius: 12px; max-width: 450px; width: 90%; position: relative;">
-            <button onclick="closePaymentModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-            <h3 style="margin-bottom: 20px; font-size: 1.3rem;" id="modalTitle">お試しプラン</h3>
-            <p style="margin-bottom: 20px; color: #666;" id="modalPrice">¥4,980</p>
-            <div class="form-group">
-                <label>カード情報</label>
-                <div id="cardElement" style="padding: 14px; background: #fff; border: 1px solid #d1d5db; border-radius: 6px; min-height: 40px;"></div>
-            </div>
-            <div class="form-group">
-                <label for="modalEmail">メールアドレス</label>
-                <input type="email" id="modalEmail" placeholder="your@email.com" style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 6px;">
-            </div>
-            <button onclick="processPayment()" id="payBtn" style="width: 100%; background: #2563eb; color: #fff; padding: 14px; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer;">決済する</button>
-            <p style="font-size: 0.8rem; color: #888; margin-top: 10px; text-align: center;">テストカード: 4242424242424242</p>
-        </div>
-    </div>
-
     <section class="faq">
         <div class="container">
             <h2>よくある質問</h2>
@@ -536,12 +517,9 @@
     </footer>
 
     <script>
-        // グローバル変数（先に定義）
+        // グローバル変数
         let currentPlan = null;
-        let payjpCard = null;
-        let payjpElements = null;
         let visitorId = '';
-        let payjpReady = false;
 
         // プラン価格
         const planPrices = {
@@ -556,141 +534,56 @@
             business: 'ビジネスプラン'
         };
 
-        // ページ読み込み完了後に初期化
-        window.addEventListener('load', function() {
-            console.log('Window loaded');
-            
-            // PAY.JP初期化
-            if (typeof Payjp !== 'undefined') {
-                console.log('Payjp found, initializing...');
-                Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
-                payjpReady = true;
-            } else {
-                console.error('Payjp not loaded!');
-            }
-
-            // Fingerprint取得
-            if (typeof FingerprintJS !== 'undefined') {
-                FingerprintJS.load().then(fp => {
-                    return fp.get();
-                }).then(result => {
-                    visitorId = result.visitorId;
-                    console.log('Fingerprint obtained:', visitorId);
-                }).catch(e => {
-                    console.warn('FingerprintJS error:', e);
-                });
-            } else {
-                console.warn('FingerprintJS not loaded');
-            }
-        });
-
-        function createAndMountCard() {
-            if (typeof Payjp === 'undefined') {
-                console.log('Payjp not loaded, waiting...');
-                setTimeout(createAndMountCard, 200);
-                return;
-            }
-            
-            if (!payjpReady) {
-                Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
-                payjpReady = true;
-            }
-            
-            const container = document.getElementById('cardElement');
-            if (!container) {
-                console.error('cardElement container not found');
-                return;
-            }
-            
-            container.innerHTML = '';
-            container.style.background = '#fff';
-            container.style.minHeight = '40px';
-            
+        // Fingerprint取得
+        (async () => {
             try {
-                payjpElements = Payjp.elements();
-                payjpCard = payjpElements.create('card', {
-                    locale: 'ja',
-                    style: {
-                        base: {
-                            fontSize: '16px',
-                            fontFamily: '"Hiragino Sans", "Microsoft YaHei", sans-serif',
-                            color: '#333333',
-                            '::placeholder': {
-                                color: '#aab7c4'
-                            }
-                        },
-                        invalid: {
-                            color: '#e53e3e'
-                        }
-                    }
-                });
-                payjpCard.mount('#cardElement');
-                console.log('Card element mounted successfully');
-            } catch (error) {
-                console.error('Error creating card element:', error);
+                if (typeof FingerprintJS !== 'undefined') {
+                    const fp = await FingerprintJS.load();
+                    const result = await fp.get();
+                    visitorId = result.visitorId;
+                }
+            } catch (e) {
+                console.warn('FingerprintJS:', e);
             }
-        }
+        })();
 
-        // モーダルを開く
+        // PAY.JP Checkoutを開く
         function openPaymentModal(plan) {
             if (plan === 'business') {
                 alert('ビジネスプランはお問い合わせください。\nTelegram: @azuma38');
                 return;
             }
 
+            const amount = planPrices[plan];
+            const planName = planNames[plan];
             currentPlan = plan;
-            document.getElementById('modalTitle').textContent = planNames[plan];
-            document.getElementById('modalPrice').textContent = `¥${planPrices[plan].toLocaleString()}`;
-            document.getElementById('paymentModal').style.display = 'flex';
-            document.getElementById('modalEmail').value = '';
-            
-            // モーダル表示後にカード要素を作成してマウント
-            setTimeout(createAndMountCard, 200);
+
+            // PAY.JP Checkout ポップアップを開く
+            PayjpCheckout.open({
+                key: 'pk_test_131a69a2129132d86012f6e1',
+                amount: amount,
+                currency: 'jpy',
+                title: planName,
+                onCreated: function(data) {
+                    // 決済成功
+                    submitPayment(data.token.id);
+                },
+                onFailed: function(err) {
+                    console.error('Checkout failed:', err);
+                    alert('決済に失敗しました');
+                }
+            });
         }
 
-        // モーダルを閉じる
-        function closePaymentModal() {
-            document.getElementById('paymentModal').style.display = 'none';
-            currentPlan = null;
-        }
-
-        // 決済処理
-        async function processPayment() {
-            const email = document.getElementById('modalEmail').value;
-            if (!email) {
-                alert('メールアドレスを入力してください');
-                return;
-            }
-
-            if (!payjpCard) {
-                alert('カード情報の読み込みに失敗しました。ページを再読み込みしてください。');
-                return;
-            }
-
-            const payBtn = document.getElementById('payBtn');
-            payBtn.disabled = true;
-            payBtn.textContent = '処理中...';
-
+        // 決済送信
+        async function submitPayment(token) {
             try {
-                // カードトークン取得
-                const tokenResult = await new Promise((resolve, reject) => {
-                    Payjp.createToken(payjpCard, (status, response) => {
-                        if (status === 200) {
-                            resolve(response.id);
-                        } else {
-                            reject(new Error(response.error?.message || 'カード情報が無効です'));
-                        }
-                    });
-                });
-
-                // 決済APIに送信
                 const response = await fetch('/api/checkout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         plan: currentPlan,
-                        email: email,
-                        payjpToken: tokenResult,
+                        payjpToken: token,
                         visitorId: visitorId
                     })
                 });
@@ -698,16 +591,12 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    closePaymentModal();
                     alert('✓ 決済完了\n\n監査リクエストを受け付けました。\n結果は24時間以内にお送りします。');
                 } else {
-                    throw new Error(result.error || '決済に失敗しました');
+                    throw new Error(result.error || '決済エラー');
                 }
             } catch (error) {
                 alert('エラー: ' + error.message);
-            } finally {
-                payBtn.disabled = false;
-                payBtn.textContent = '決済する';
             }
         }
 
