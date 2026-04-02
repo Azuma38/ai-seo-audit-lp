@@ -9,6 +9,8 @@
     <script src="https://www.google.com/recaptcha/api.js?render=6LeZ4aAsAAAAAI3uD7Z2j-MGjRWAVARoy32vgumz"></script>
     <!-- FingerprintJS -->
     <script src="https://openfpcdn.io/fingerprintjs/v4.js"></script>
+    <!-- PAY.JP v2 -->
+    <script src="https://js.pay.jp/v2/payjp.js"></script>
     <style>
         * {
             margin: 0;
@@ -514,6 +516,34 @@
         </div>
     </footer>
 
+    <!-- 決済モーダル -->
+    <div id="paymentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: #fff; padding: 40px; border-radius: 12px; max-width: 450px; width: 90%; position: relative;">
+            <button onclick="closePaymentModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            <h3 style="margin-bottom: 20px; font-size: 1.3rem;" id="modalTitle">お試しプラン</h3>
+            <p style="margin-bottom: 20px; color: #666; font-size: 1.2rem; font-weight: bold;" id="modalPrice">¥4,980</p>
+            
+            <div class="form-group">
+                <label for="modalEmail">メールアドレス <span style="color: #e11d48;">*</span></label>
+                <input type="email" id="modalEmail" placeholder="your@email.com" required style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; margin-bottom: 15px;">
+            </div>
+            
+            <div class="form-group">
+                <label>カード情報 <span style="color: #e11d48;">*</span></label>
+                <div id="cardElement" style="padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; min-height: 50px;"></div>
+            </div>
+            
+            <div id="cardErrors" style="color: #e53e3e; font-size: 0.9rem; margin-top: 10px;"></div>
+            
+            <button id="submitPayment" style="width: 100%; padding: 14px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; margin-top: 20px;">決済する</button>
+            
+            <p style="font-size: 0.85rem; color: #888; margin-top: 15px; text-align: center;">
+                テストカード: 4242424242424242<br>
+                期限: 未来の日付 / CVC: 任意の3桁
+            </p>
+        </div>
+    </div>
+
     <script>
         // グローバル変数
         let currentPlan = null;
@@ -545,52 +575,88 @@
             }
         })();
 
-        // PAY.JP Checkoutボタンを動的生成
+        // PAY.JPカード要素
+        let payjpCard = null;
+        let payjpElements = null;
+
+        // PAY.JP初期化
+        function initPayjp() {
+            if (typeof Payjp === 'undefined') {
+                console.error('Payjp not loaded');
+                return false;
+            }
+            try {
+                Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
+                payjpElements = Payjp.elements();
+                payjpCard = payjpElements.create('card', {
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            color: '#333',
+                            '::placeholder': { color: '#aab7c4' }
+                        },
+                        invalid: { color: '#e53e3e' }
+                    }
+                });
+                return true;
+            } catch (e) {
+                console.error('Payjp init error:', e);
+                return false;
+            }
+        }
+
+        // モーダルを開く
         function openPaymentModal(plan) {
             if (plan === 'business') {
                 alert('ビジネスプランはお問い合わせください。\nTelegram: @azuma38');
                 return;
             }
 
-            const amount = planPrices[plan];
-            const planName = planNames[plan];
             currentPlan = plan;
+            document.getElementById('modalTitle').textContent = planNames[plan];
+            document.getElementById('modalPrice').textContent = '¥' + planPrices[plan].toLocaleString();
+            document.getElementById('paymentModal').style.display = 'flex';
 
-            // 既存のCheckoutボタンがあれば削除
-            const existingBtn = document.getElementById('payjp-checkout-btn');
-            if (existingBtn) existingBtn.remove();
-
-            // PAY.JP Checkoutボタンを動的生成
-            const script = document.createElement('script');
-            script.id = 'payjp-checkout-btn';
-            script.className = 'payjp-button';
-            script.src = 'https://checkout.pay.jp/';
-            script.setAttribute('data-key', 'pk_test_131a69a2129132d86012f6e1');
-            script.setAttribute('data-amount', amount);
-            script.setAttribute('data-currency', 'jpy');
-            script.setAttribute('data-submit-text', 'カードで支払う');
-            script.setAttribute('data-title', planName);
-            script.setAttribute('data-description', 'AI SEO監査 ' + planName);
-            script.setAttribute('data-email', document.getElementById('email')?.value || '');
-            script.async = true;
-
-            // コールバック設定
-            window.PayjpCheckoutOnCreated = function(data) {
-                submitPayment(data.token.id);
-            };
-            script.setAttribute('data-on-created', 'PayjpCheckoutOnCreated');
-
-            window.PayjpCheckoutOnFailed = function(err) {
-                console.error('Checkout failed:', err);
-                alert('決済に失敗しました');
-            };
-            script.setAttribute('data-on-failed', 'PayjpCheckoutOnFailed');
-
-            document.body.appendChild(script);
+            // PAY.JP初期化 & カード要素マウント
+            if (!payjpCard && initPayjp()) {
+                setTimeout(function() {
+                    try {
+                        payjpCard.mount('#cardElement');
+                        console.log('Card mounted');
+                    } catch (e) {
+                        console.error('Mount error:', e);
+                    }
+                }, 100);
+            } else if (payjpCard) {
+                payjpCard.mount('#cardElement');
+            }
         }
 
+        // モーダルを閉じる
+        function closePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+            document.getElementById('cardErrors').textContent = '';
+        }
+
+        // 決済実行
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('submitPayment').addEventListener('click', function() {
+                const email = document.getElementById('modalEmail').value;
+                if (!email) {
+                    document.getElementById('cardErrors').textContent = 'メールアドレスを入力してください';
+                    return;
+                }
+
+                payjpElements.getToken().then(function(token) {
+                    submitPayment(token.id, email);
+                }).catch(function(err) {
+                    document.getElementById('cardErrors').textContent = err.message || 'カード情報を確認してください';
+                });
+            });
+        });
+
         // 決済送信
-        async function submitPayment(token) {
+        async function submitPayment(token, email) {
             try {
                 const response = await fetch('/api/checkout', {
                     method: 'POST',
@@ -598,6 +664,7 @@
                     body: JSON.stringify({
                         plan: currentPlan,
                         payjpToken: token,
+                        email: email,
                         visitorId: visitorId
                     })
                 });
@@ -605,12 +672,13 @@
                 const result = await response.json();
 
                 if (result.success) {
+                    closePaymentModal();
                     alert('✓ 決済完了\n\n監査リクエストを受け付けました。\n結果は24時間以内にお送りします。');
                 } else {
                     throw new Error(result.error || '決済エラー');
                 }
             } catch (error) {
-                alert('エラー: ' + error.message);
+                document.getElementById('cardErrors').textContent = error.message;
             }
         }
 
