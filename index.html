@@ -419,7 +419,7 @@
                         <li>主要問題トップ5の詳細</li>
                         <li>修正ポイント</li>
                     </ul>
-                    <a href="#free-audit" class="btn plan-btn" data-plan="trial">このプランで始める</a>
+                    <a href="javascript:void(0)" class="btn plan-btn" data-plan="trial">このプランで始める</a>
                 </div>
                 <div class="pricing-card">
                     <h3>スタンダード</h3>
@@ -430,7 +430,7 @@
                         <li>コピペ修正プロンプト</li>
                         <li>here.now + Google Drive提供</li>
                     </ul>
-                    <a href="#free-audit" class="btn plan-btn" data-plan="standard">このプランで始める</a>
+                    <a href="javascript:void(0)" class="btn plan-btn" data-plan="standard">このプランで始める</a>
                 </div>
                 <div class="pricing-card">
                     <h3>ビジネス</h3>
@@ -441,7 +441,7 @@
                         <li>月次PDCA支援</li>
                         <li>優先サポート</li>
                     </ul>
-                    <a href="#free-audit" class="btn plan-btn" data-plan="business">お問い合わせ</a>
+                    <a href="javascript:void(0)" class="btn plan-btn" data-plan="business">お問い合わせ</a>
                 </div>
             </div>
         </div>
@@ -462,16 +462,23 @@
                     <input type="email" id="email" name="email" placeholder="your@email.com" required>
                 </div>
                 <div class="form-group">
-                    <label for="industry">業種（任意）</label>
-                    <select id="industry" name="industry">
+                    <label for="industry">業種 <span style="color: #e11d48;">*</span></label>
+                    <select id="industry" name="industry" required>
                         <option value="">選択してください</option>
                         <option value="restaurant">飲食店</option>
                         <option value="beauty">美容・理容</option>
                         <option value="medical">医療・福祉</option>
                         <option value="retail">小売</option>
                         <option value="service">サービス業</option>
+                        <option value="it">IT・Web</option>
+                        <option value="manufacturing">製造業</option>
+                        <option value="education">教育・学習支援</option>
                         <option value="other">その他</option>
                     </select>
+                </div>
+                <div class="form-group" id="otherIndustryGroup" style="display: none;">
+                    <label for="otherIndustry">業種（その他） <span style="color: #e11d48;">*</span></label>
+                    <input type="text" id="otherIndustry" name="otherIndustry" placeholder="例：不動産業">
                 </div>
                 <button type="submit" class="submit-btn" id="submitBtn">無料診断を開始</button>
                 <p style="font-size: 0.85rem; color: #666; margin-top: 15px; text-align: center;">
@@ -641,6 +648,20 @@
             });
         });
 
+        // 業種選択時の処理
+        document.getElementById('industry').addEventListener('change', (e) => {
+            const otherGroup = document.getElementById('otherIndustryGroup');
+            const otherInput = document.getElementById('otherIndustry');
+            if (e.target.value === 'other') {
+                otherGroup.style.display = 'block';
+                otherInput.required = true;
+            } else {
+                otherGroup.style.display = 'none';
+                otherInput.required = false;
+                otherInput.value = '';
+            }
+        });
+
         // 無料診断フォーム
         const form = document.getElementById('auditForm');
         const submitBtn = document.getElementById('submitBtn');
@@ -650,7 +671,17 @@
 
             const url = document.getElementById('url').value;
             const email = document.getElementById('email').value;
-            const industry = document.getElementById('industry').value;
+            let industry = document.getElementById('industry').value;
+            
+            // その他の場合は入力値を使用
+            if (industry === 'other') {
+                const otherIndustry = document.getElementById('otherIndustry').value;
+                if (!otherIndustry) {
+                    alert('業種（その他）を入力してください');
+                    return;
+                }
+                industry = otherIndustry;
+            }
 
             submitBtn.disabled = true;
             submitBtn.textContent = '送信中...';
