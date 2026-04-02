@@ -538,19 +538,40 @@
     <script>
         // PAY.JP初期化
         let payjpCard = null;
-        let cardInitialized = false;
+        let payjpElements = null;
         
-        function initCard() {
-            if (cardInitialized || typeof Payjp === 'undefined') {
-                if (typeof Payjp === 'undefined') {
-                    setTimeout(initCard, 100);
-                }
+        // ページ読み込み時にPAY.JPを初期化
+        function initPayjp() {
+            if (typeof Payjp === 'undefined') {
+                setTimeout(initPayjp, 100);
                 return;
             }
             Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
-            const elements = Payjp.elements();
-            payjpCard = elements.create('card', {locale: 'ja'});
-            cardInitialized = true;
+        }
+        initPayjp();
+
+        function createAndMountCard() {
+            if (typeof Payjp === 'undefined') {
+                setTimeout(createAndMountCard, 100);
+                return;
+            }
+            
+            // コンテナをクリア
+            const container = document.getElementById('cardElement');
+            container.innerHTML = '';
+            
+            // 新しいカード要素を作成してマウント
+            payjpElements = Payjp.elements();
+            payjpCard = payjpElements.create('card', {
+                locale: 'ja',
+                style: {
+                    base: {
+                        fontSize: '16px',
+                        color: '#333'
+                    }
+                }
+            });
+            payjpCard.mount('#cardElement');
         }
 
         // プラン価格
@@ -591,13 +612,10 @@
             document.getElementById('modalTitle').textContent = planNames[plan];
             document.getElementById('modalPrice').textContent = `¥${planPrices[plan].toLocaleString()}`;
             document.getElementById('paymentModal').style.display = 'flex';
+            document.getElementById('modalEmail').value = '';
             
-            // モーダル表示後にカード要素をマウント
-            initCard();
-            if (payjpCard && !payjpCard._mounted) {
-                payjpCard.mount('#cardElement');
-                payjpCard._mounted = true;
-            }
+            // モーダル表示後にカード要素を作成してマウント
+            setTimeout(createAndMountCard, 50);
         }
 
         // モーダルを閉じる
