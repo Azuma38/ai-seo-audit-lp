@@ -8,7 +8,7 @@
     <!-- reCAPTCHA v3 -->
     <script src="https://www.google.com/recaptcha/api.js?render=6LeZ4aAsAAAAAI3uD7Z2j-MGjRWAVARoy32vgumz"></script>
     <!-- FingerprintJS -->
-    <script src="https://openfpcdn.io/fingerprintjs/v4"></script>
+    <script src="https://openfpcdn.io/fingerprintjs/v4.js"></script>
     <!-- PAY.JP -->
     <script src="https://js.pay.jp/v2/payjp.js"></script>
     <style>
@@ -541,16 +541,7 @@
         let payjpCard = null;
         let payjpElements = null;
         let visitorId = '';
-        
-        // PAY.JP初期化
-        function initPayjp() {
-            if (typeof Payjp === 'undefined') {
-                setTimeout(initPayjp, 100);
-                return;
-            }
-            Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
-        }
-        initPayjp();
+        let payjpReady = false;
 
         // プラン価格
         const planPrices = {
@@ -565,22 +556,44 @@
             business: 'ビジネスプラン'
         };
 
-        // Fingerprint取得
-        (async () => {
-            try {
-                const fp = await FingerprintJS.load();
-                const result = await fp.get();
-                visitorId = result.visitorId;
-            } catch (e) {
-                console.warn('FingerprintJS error:', e);
+        // ページ読み込み完了後に初期化
+        window.addEventListener('load', function() {
+            console.log('Window loaded');
+            
+            // PAY.JP初期化
+            if (typeof Payjp !== 'undefined') {
+                console.log('Payjp found, initializing...');
+                Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
+                payjpReady = true;
+            } else {
+                console.error('Payjp not loaded!');
             }
-        })();
+
+            // Fingerprint取得
+            if (typeof FingerprintJS !== 'undefined') {
+                FingerprintJS.load().then(fp => {
+                    return fp.get();
+                }).then(result => {
+                    visitorId = result.visitorId;
+                    console.log('Fingerprint obtained:', visitorId);
+                }).catch(e => {
+                    console.warn('FingerprintJS error:', e);
+                });
+            } else {
+                console.warn('FingerprintJS not loaded');
+            }
+        });
 
         function createAndMountCard() {
             if (typeof Payjp === 'undefined') {
                 console.log('Payjp not loaded, waiting...');
-                setTimeout(createAndMountCard, 100);
+                setTimeout(createAndMountCard, 200);
                 return;
+            }
+            
+            if (!payjpReady) {
+                Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
+                payjpReady = true;
             }
             
             const container = document.getElementById('cardElement');
