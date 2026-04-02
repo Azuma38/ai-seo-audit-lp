@@ -419,7 +419,7 @@
                         <li>主要問題トップ5の詳細</li>
                         <li>修正ポイント</li>
                     </ul>
-                    <a href="javascript:void(0)" class="btn plan-btn" data-plan="trial">このプランで始める</a>
+                    <a href="javascript:void(0)" class="btn plan-btn" data-plan="trial" onclick="openPaymentModal('trial'); return false;">このプランで始める</a>
                 </div>
                 <div class="pricing-card">
                     <h3>スタンダード</h3>
@@ -430,7 +430,7 @@
                         <li>コピペ修正プロンプト</li>
                         <li>here.now + Google Drive提供</li>
                     </ul>
-                    <a href="javascript:void(0)" class="btn plan-btn" data-plan="standard">このプランで始める</a>
+                    <a href="javascript:void(0)" class="btn plan-btn" data-plan="standard" onclick="openPaymentModal('standard'); return false;">このプランで始める</a>
                 </div>
                 <div class="pricing-card">
                     <h3>ビジネス</h3>
@@ -441,7 +441,7 @@
                         <li>月次PDCA支援</li>
                         <li>優先サポート</li>
                     </ul>
-                    <a href="javascript:void(0)" class="btn plan-btn" data-plan="business">お問い合わせ</a>
+                    <a href="javascript:void(0)" class="btn plan-btn" data-plan="business" onclick="openPaymentModal('business'); return false;">お問い合わせ</a>
                 </div>
             </div>
         </div>
@@ -680,14 +680,6 @@
                 payBtn.textContent = '決済する';
             }
         }
-
-        // プランカードのボタンクリック
-        document.querySelectorAll('.plan-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                openPaymentModal(btn.dataset.plan);
-            });
-        });
 
         // 業種選択時の処理
         document.getElementById('industry').addEventListener('change', (e) => {
