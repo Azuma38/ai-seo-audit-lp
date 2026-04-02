@@ -9,8 +9,8 @@
     <script src="https://www.google.com/recaptcha/api.js?render=6LeZ4aAsAAAAAI3uD7Z2j-MGjRWAVARoy32vgumz"></script>
     <!-- FingerprintJS -->
     <script src="https://openfpcdn.io/fingerprintjs/v4"></script>
-    <!-- PAY.JP -->
-    <script src="https://js.pay.jp/" async></script>
+    <!-- PAY.JP Checkout -->
+    <script src="https://js.pay.jp/v2/payjp.js"></script>
     <style>
         * {
             margin: 0;
@@ -482,14 +482,10 @@
                         <option value="other">その他</option>
                     </select>
                 </div>
-                <!-- カード情報（有料プランのみ表示） -->
-                <div id="cardSection" style="display: none;">
-                    <div class="form-group">
-                        <label>カード情報</label>
-                        <div id="cardElement" style="padding: 14px; background: #fff; border: 1px solid #d1d5db; border-radius: 6px;"></div>
-                    </div>
-                </div>
                 <button type="submit" class="submit-btn" id="submitBtn">無料診断を開始</button>
+                <p style="font-size: 0.85rem; color: #666; margin-top: 15px; text-align: center;">
+                    ※ 有料プランは上の料金表のボタンからお申し込みください
+                </p>
             </form>
         </div>
     </section>
@@ -526,7 +522,6 @@
         const form = document.getElementById('auditForm');
         const submitBtn = document.getElementById('submitBtn');
         const planSelect = document.getElementById('plan');
-        const cardSection = document.getElementById('cardElement');
         
         // プラン価格
         const planPrices = {
@@ -535,9 +530,6 @@
             standard: 9800,
             business: 79800
         };
-        
-        // PAY.JPカード要素
-        let card = null;
         
         // Fingerprint取得
         let visitorId = '';
@@ -551,7 +543,7 @@
             }
         })();
         
-        // プランカードのボタンクリック処理
+        // プランカードのボタンクリック - PAY.JP Checkout ポップアップ
         document.querySelectorAll('.plan-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -562,13 +554,29 @@
                     return;
                 }
                 
-                // プランを選択してchangeイベントを発火
-                planSelect.value = plan;
-                planSelect.dispatchEvent(new Event('change'));
+                const price = planPrices[plan];
+                const planName = plan === 'trial' ? 'お試しプラン' : 'スタンダードプラン';
+                
+                // PAY.JP Checkout ポップアップを開く
+                PayjpCheckout.open({
+                    key: 'pk_test_131a69a2129132d86012f6e1',
+                    amount: price,
+                    currency: 'jpy',
+                    name: 'AI SEO監査 ' + planName,
+                    description: '監査結果は24時間以内にお届け',
+                    onCreated: function(data) {
+                        // 決済成功 - 監査フォームへスクロール
+                        alert(`✓ 決済完了\n\n監査情報を入力してください。`);
+                        window.location.href = '#free-audit';
+                    },
+                    onFailed: function(error) {
+                        alert('決済に失敗しました: ' + (error?.message || 'カード情報を確認してください'));
+                    }
+                });
             });
         });
-
-        // プラン選択時の処理
+        
+        // フォームのプラン選択変更時 - 有料プランは料金表のボタンへ誘導
         planSelect.addEventListener('change', (e) => {
             const plan = e.target.value;
             const price = planPrices[plan];
@@ -580,26 +588,23 @@
             }
             
             if (price > 0) {
-                document.getElementById('cardSection').style.display = 'block';
-                submitBtn.textContent = `¥${price.toLocaleString()}で監査を開始`;
-                
-                // PAY.JPカード要素を初期化
-                if (!card && Payjp) {
-                    Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
-                    const elements = Payjp.elements();
-                    card = elements.create('card');
-                    card.mount('#cardElement');
-                }
-            } else {
-                document.getElementById('cardSection').style.display = 'none';
-                submitBtn.textContent = '無料診断を開始';
+                alert(`有料プランは料金表の「このプランで始める」ボタンからお申し込みください。\n\n画面上部の料金表までスクロールします。`);
+                planSelect.value = 'free';
+                document.querySelector('.pricing').scrollIntoView({ behavior: 'smooth' });
+                return;
             }
         });
         
+        // 無料診断フォーム送信
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const plan = planSelect.value;
+            if (plan !== 'free') {
+                alert('有料プランは料金表のボタンからお申し込みください。');
+                return;
+            }
+            
             const url = document.getElementById('url').value;
             const email = document.getElementById('email').value;
             const industry = document.getElementById('industry').value;
@@ -611,29 +616,13 @@
                 // reCAPTCHA v3 トークン取得
                 const recaptchaToken = await grecaptcha.execute('6LeZ4aAsAAAAAI3uD7Z2j-MGjRWAVARoy32vgumz', {action: 'submit'});
                 
-                // 有料プランの場合はカードトークン取得
-                let payjpToken = null;
-                if (planPrices[plan] > 0 && card) {
-                    const tokenResult = await new Promise((resolve, reject) => {
-                        Payjp.createToken(card, (status, response) => {
-                            if (status === 200) {
-                                resolve(response.id);
-                            } else {
-                                reject(new Error(response.error?.message || 'カード情報の取得に失敗しました'));
-                            }
-                        });
-                    });
-                    payjpToken = tokenResult;
-                }
-                
                 // APIに送信
-                const endpoint = planPrices[plan] > 0 ? '/api/checkout' : '/api/audit';
-                const response = await fetch(endpoint, {
+                const response = await fetch('/api/audit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         plan, url, email, industry, 
-                        recaptchaToken, visitorId, payjpToken 
+                        recaptchaToken, visitorId
                     })
                 });
                 
@@ -642,16 +631,12 @@
                 if (result.success) {
                     submitBtn.textContent = '✓ 申込み完了';
                     submitBtn.style.background = '#10b981';
-                    alert(planPrices[plan] > 0 
-                        ? `決済が完了しました。\n監査結果は24時間以内にお送りします。`
-                        : '監査リクエストを受け付けました。\n結果は24時間以内にお送りします。');
+                    alert('監査リクエストを受け付けました。\n結果は24時間以内にお送りします。');
                 } else {
                     throw new Error(result.error || 'エラーが発生しました');
                 }
             } catch (error) {
-                submitBtn.textContent = planPrices[plan] > 0 
-                    ? `¥${planPrices[plan].toLocaleString()}で監査を開始` 
-                    : '無料診断を開始';
+                submitBtn.textContent = '無料診断を開始';
                 submitBtn.disabled = false;
                 alert('エラー: ' + error.message);
             }
