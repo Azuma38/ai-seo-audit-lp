@@ -419,7 +419,7 @@
                         <li>主要問題トップ5の詳細</li>
                         <li>修正ポイント</li>
                     </ul>
-                    <a href="#" class="btn">このプランで始める</a>
+                    <a href="#free-audit" class="btn plan-btn" data-plan="trial">このプランで始める</a>
                 </div>
                 <div class="pricing-card">
                     <h3>スタンダード</h3>
@@ -430,7 +430,7 @@
                         <li>コピペ修正プロンプト</li>
                         <li>here.now + Google Drive提供</li>
                     </ul>
-                    <a href="#" class="btn">このプランで始める</a>
+                    <a href="#free-audit" class="btn plan-btn" data-plan="standard">このプランで始める</a>
                 </div>
                 <div class="pricing-card">
                     <h3>ビジネス</h3>
@@ -441,7 +441,7 @@
                         <li>月次PDCA支援</li>
                         <li>優先サポート</li>
                     </ul>
-                    <a href="#" class="btn">お問い合わせ</a>
+                    <a href="#free-audit" class="btn plan-btn" data-plan="business">お問い合わせ</a>
                 </div>
             </div>
         </div>
@@ -551,6 +551,23 @@
             }
         })();
         
+        // プランカードのボタンクリック処理
+        document.querySelectorAll('.plan-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const plan = btn.dataset.plan;
+                
+                if (plan === 'business') {
+                    alert('ビジネスプランはお問い合わせください。\nTelegram: @azuma38');
+                    return;
+                }
+                
+                // プランを選択してchangeイベントを発火
+                planSelect.value = plan;
+                planSelect.dispatchEvent(new Event('change'));
+            });
+        });
+
         // プラン選択時の処理
         planSelect.addEventListener('change', (e) => {
             const plan = e.target.value;
