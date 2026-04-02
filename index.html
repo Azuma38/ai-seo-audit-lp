@@ -536,11 +536,13 @@
     </footer>
 
     <script>
-        // PAY.JP初期化
+        // グローバル変数（先に定義）
+        let currentPlan = null;
         let payjpCard = null;
         let payjpElements = null;
+        let visitorId = '';
         
-        // ページ読み込み時にPAY.JPを初期化
+        // PAY.JP初期化
         function initPayjp() {
             if (typeof Payjp === 'undefined') {
                 setTimeout(initPayjp, 100);
@@ -549,30 +551,6 @@
             Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
         }
         initPayjp();
-
-        function createAndMountCard() {
-            if (typeof Payjp === 'undefined') {
-                setTimeout(createAndMountCard, 100);
-                return;
-            }
-            
-            // コンテナをクリア
-            const container = document.getElementById('cardElement');
-            container.innerHTML = '';
-            
-            // 新しいカード要素を作成してマウント
-            payjpElements = Payjp.elements();
-            payjpCard = payjpElements.create('card', {
-                locale: 'ja',
-                style: {
-                    base: {
-                        fontSize: '16px',
-                        color: '#333'
-                    }
-                }
-            });
-            payjpCard.mount('#cardElement');
-        }
 
         // プラン価格
         const planPrices = {
@@ -587,10 +565,7 @@
             business: 'ビジネスプラン'
         };
 
-        let currentPlan = null;
-
         // Fingerprint取得
-        let visitorId = '';
         (async () => {
             try {
                 const fp = await FingerprintJS.load();
@@ -600,6 +575,28 @@
                 console.warn('FingerprintJS error:', e);
             }
         })();
+
+        function createAndMountCard() {
+            if (typeof Payjp === 'undefined') {
+                setTimeout(createAndMountCard, 100);
+                return;
+            }
+            
+            const container = document.getElementById('cardElement');
+            container.innerHTML = '';
+            
+            payjpElements = Payjp.elements();
+            payjpCard = payjpElements.create('card', {
+                locale: 'ja',
+                style: {
+                    base: {
+                        fontSize: '16px',
+                        color: '#333'
+                    }
+                }
+            });
+            payjpCard.mount('#cardElement');
+        }
 
         // モーダルを開く
         function openPaymentModal(plan) {
