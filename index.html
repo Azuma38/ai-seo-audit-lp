@@ -537,10 +537,21 @@
 
     <script>
         // PAY.JP初期化
-        Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
-        const elements = Payjp.elements();
-        const cardElement = elements.create('card', {locale: 'ja'});
-        cardElement.mount('#cardElement');
+        let payjpCard = null;
+        let cardInitialized = false;
+        
+        function initCard() {
+            if (cardInitialized || typeof Payjp === 'undefined') {
+                if (typeof Payjp === 'undefined') {
+                    setTimeout(initCard, 100);
+                }
+                return;
+            }
+            Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
+            const elements = Payjp.elements();
+            payjpCard = elements.create('card', {locale: 'ja'});
+            cardInitialized = true;
+        }
 
         // プラン価格
         const planPrices = {
@@ -580,6 +591,13 @@
             document.getElementById('modalTitle').textContent = planNames[plan];
             document.getElementById('modalPrice').textContent = `¥${planPrices[plan].toLocaleString()}`;
             document.getElementById('paymentModal').style.display = 'flex';
+            
+            // モーダル表示後にカード要素をマウント
+            initCard();
+            if (payjpCard && !payjpCard._mounted) {
+                payjpCard.mount('#cardElement');
+                payjpCard._mounted = true;
+            }
         }
 
         // モーダルを閉じる
@@ -596,6 +614,11 @@
                 return;
             }
 
+            if (!payjpCard) {
+                alert('カード情報の読み込みに失敗しました。ページを再読み込みしてください。');
+                return;
+            }
+
             const payBtn = document.getElementById('payBtn');
             payBtn.disabled = true;
             payBtn.textContent = '処理中...';
@@ -603,7 +626,7 @@
             try {
                 // カードトークン取得
                 const tokenResult = await new Promise((resolve, reject) => {
-                    Payjp.createToken(cardElement, (status, response) => {
+                    Payjp.createToken(payjpCard, (status, response) => {
                         if (status === 200) {
                             resolve(response.id);
                         } else {
