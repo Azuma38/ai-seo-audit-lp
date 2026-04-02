@@ -463,7 +463,7 @@
                 </div>
                 <div class="form-group">
                     <label for="industry">業種 <span style="color: #e11d48;">*</span></label>
-                    <select id="industry" name="industry" required>
+                    <select id="industry" name="industry" required onchange="handleIndustryChange(this.value)">
                         <option value="">選択してください</option>
                         <option value="restaurant">飲食店</option>
                         <option value="beauty">美容・理容</option>
@@ -682,10 +682,10 @@
         }
 
         // 業種選択時の処理
-        document.getElementById('industry').addEventListener('change', (e) => {
+        function handleIndustryChange(value) {
             const otherGroup = document.getElementById('otherIndustryGroup');
             const otherInput = document.getElementById('otherIndustry');
-            if (e.target.value === 'other') {
+            if (value === 'other') {
                 otherGroup.style.display = 'block';
                 otherInput.required = true;
             } else {
@@ -693,7 +693,7 @@
                 otherInput.required = false;
                 otherInput.value = '';
             }
-        });
+        }
 
         // 無料診断フォーム
         const form = document.getElementById('auditForm');
