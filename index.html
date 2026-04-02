@@ -9,18 +9,6 @@
     <script src="https://www.google.com/recaptcha/api.js?render=6LeZ4aAsAAAAAI3uD7Z2j-MGjRWAVARoy32vgumz"></script>
     <!-- FingerprintJS -->
     <script src="https://openfpcdn.io/fingerprintjs/v4.js"></script>
-    <!-- PAY.JP Checkout -->
-    <script src="https://checkout.pay.jp/" async></script>
-    <script>
-        // PAY.JP Checkout読み込み待ち
-        function waitForPayjpCheckout(callback) {
-            if (typeof PayjpCheckout !== 'undefined') {
-                callback();
-            } else {
-                setTimeout(function() { waitForPayjpCheckout(callback); }, 100);
-            }
-        }
-    </script>
     <style>
         * {
             margin: 0;
@@ -557,7 +545,7 @@
             }
         })();
 
-        // PAY.JP Checkoutを開く
+        // PAY.JP Checkoutボタンを動的生成
         function openPaymentModal(plan) {
             if (plan === 'business') {
                 alert('ビジネスプランはお問い合わせください。\nTelegram: @azuma38');
@@ -568,24 +556,37 @@
             const planName = planNames[plan];
             currentPlan = plan;
 
-            // PAY.JP Checkout読み込み待ち
-            waitForPayjpCheckout(function() {
-                // PAY.JP Checkout ポップアップを開く
-                PayjpCheckout.open({
-                    key: 'pk_test_131a69a2129132d86012f6e1',
-                    amount: amount,
-                    currency: 'jpy',
-                    title: planName,
-                    onCreated: function(data) {
-                        // 決済成功
-                        submitPayment(data.token.id);
-                    },
-                    onFailed: function(err) {
-                        console.error('Checkout failed:', err);
-                        alert('決済に失敗しました');
-                    }
-                });
-            });
+            // 既存のCheckoutボタンがあれば削除
+            const existingBtn = document.getElementById('payjp-checkout-btn');
+            if (existingBtn) existingBtn.remove();
+
+            // PAY.JP Checkoutボタンを動的生成
+            const script = document.createElement('script');
+            script.id = 'payjp-checkout-btn';
+            script.className = 'payjp-button';
+            script.src = 'https://checkout.pay.jp/';
+            script.setAttribute('data-key', 'pk_test_131a69a2129132d86012f6e1');
+            script.setAttribute('data-amount', amount);
+            script.setAttribute('data-currency', 'jpy');
+            script.setAttribute('data-submit-text', 'カードで支払う');
+            script.setAttribute('data-title', planName);
+            script.setAttribute('data-description', 'AI SEO監査 ' + planName);
+            script.setAttribute('data-email', document.getElementById('email')?.value || '');
+            script.async = true;
+
+            // コールバック設定
+            window.PayjpCheckoutOnCreated = function(data) {
+                submitPayment(data.token.id);
+            };
+            script.setAttribute('data-on-created', 'PayjpCheckoutOnCreated');
+
+            window.PayjpCheckoutOnFailed = function(err) {
+                console.error('Checkout failed:', err);
+                alert('決済に失敗しました');
+            };
+            script.setAttribute('data-on-failed', 'PayjpCheckoutOnFailed');
+
+            document.body.appendChild(script);
         }
 
         // 決済送信
