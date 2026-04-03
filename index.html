@@ -575,12 +575,13 @@
             }
         })();
 
-        // PAY.JPカード要素
+        // PAY.JP v2 インスタンス
+        let payjpInstance = null;
         let payjpCard = null;
         let payjpElements = null;
         let payjpReady = false;
 
-        // PAY.JP初期化（スクリプト読み込み後）
+        // PAY.JP v2初期化
         function initPayjp() {
             if (typeof Payjp === 'undefined') {
                 console.log('Waiting for Payjp...');
@@ -588,9 +589,10 @@
                 return;
             }
             try {
-                Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
+                // v2では関数として呼び出してインスタンスを取得
+                payjpInstance = Payjp('pk_test_131a69a2129132d86012f6e1');
                 payjpReady = true;
-                console.log('Payjp initialized successfully');
+                console.log('Payjp v2 initialized successfully');
             } catch (e) {
                 console.error('Payjp init error:', e);
             }
@@ -601,7 +603,6 @@
             if (typeof Payjp !== 'undefined') {
                 initPayjp();
             } else {
-                // ポーリングで待機
                 let attempts = 0;
                 const checkInterval = setInterval(function() {
                     attempts++;
@@ -658,8 +659,8 @@
                 // 古い要素をクリア
                 document.getElementById('cardElement').innerHTML = '';
                 
-                // 新しいelementsとcardを作成
-                payjpElements = Payjp.elements();
+                // v2: インスタンスからelementsを作成
+                payjpElements = payjpInstance.elements();
                 payjpCard = payjpElements.create('card', {
                     style: {
                         base: {
@@ -693,8 +694,13 @@
                     return;
                 }
 
-                payjpElements.getToken().then(function(token) {
-                    submitPayment(token.id, email);
+                // v2: payjpInstanceからトークン作成
+                payjpInstance.createToken(payjpCard).then(function(response) {
+                    if (response.error) {
+                        document.getElementById('cardErrors').textContent = response.error.message || 'カード情報を確認してください';
+                    } else {
+                        submitPayment(response.id, email);
+                    }
                 }).catch(function(err) {
                     document.getElementById('cardErrors').textContent = err.message || 'カード情報を確認してください';
                 });
