@@ -693,6 +693,13 @@
                     document.getElementById('cardErrors').textContent = 'メールアドレスを入力してください';
                     return;
                 }
+                
+                // URL入力チェック
+                const url = document.getElementById('url').value;
+                if (!url) {
+                    document.getElementById('cardErrors').textContent = '監査対象URLを先に入力してください';
+                    return;
+                }
 
                 // v2: payjpInstanceからトークン作成
                 payjpInstance.createToken(payjpCard).then(function(response) {
@@ -710,11 +717,15 @@
         // 決済送信
         async function submitPayment(token, email) {
             try {
+                // メインフォームからURLを取得
+                const url = document.getElementById('url').value;
+                
                 const response = await fetch('/api/checkout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         plan: currentPlan,
+                        url: url,
                         payjpToken: token,
                         email: email,
                         visitorId: visitorId
