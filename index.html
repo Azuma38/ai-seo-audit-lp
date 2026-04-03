@@ -534,6 +534,26 @@
             </div>
             
             <div class="form-group">
+                <label for="modalIndustry">業種</label>
+                <select id="modalIndustry" style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; margin-bottom: 15px; background: #fff;">
+                    <option value="">選択してください</option>
+                    <option value="restaurant">飲食店</option>
+                    <option value="beauty">美容・理容</option>
+                    <option value="medical">医療・福祉</option>
+                    <option value="retail">小売</option>
+                    <option value="service">サービス業</option>
+                    <option value="it">IT・Web</option>
+                    <option value="manufacturing">製造業</option>
+                    <option value="education">教育・学習支援</option>
+                    <option value="other">その他</option>
+                </select>
+            </div>
+            <div class="form-group" id="modalOtherIndustryGroup" style="display: none;">
+                <label for="modalOtherIndustry">業種（その他）</label>
+                <input type="text" id="modalOtherIndustry" placeholder="例：不動産業" style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; margin-bottom: 15px;">
+            </div>
+            
+            <div class="form-group">
                 <label>カード情報 <span style="color: #e11d48;">*</span></label>
                 <div id="cardElement" style="padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; min-height: 50px;"></div>
             </div>
@@ -697,6 +717,9 @@
             document.getElementById('cardErrors').textContent = '';
             document.getElementById('modalUrl').value = '';
             document.getElementById('modalEmail').value = '';
+            document.getElementById('modalIndustry').value = '';
+            document.getElementById('modalOtherIndustry').value = '';
+            document.getElementById('modalOtherIndustryGroup').style.display = 'none';
         }
 
         // 決済実行
@@ -714,21 +737,37 @@
                     return;
                 }
 
+                // 業種取得
+                let industry = document.getElementById('modalIndustry').value;
+                if (industry === 'other') {
+                    industry = document.getElementById('modalOtherIndustry').value || 'その他';
+                }
+
                 // v2: payjpInstanceからトークン作成
                 payjpInstance.createToken(payjpCard).then(function(response) {
                     if (response.error) {
                         document.getElementById('cardErrors').textContent = response.error.message || 'カード情報を確認してください';
                     } else {
-                        submitPayment(response.id, email, url);
+                        submitPayment(response.id, email, url, industry);
                     }
                 }).catch(function(err) {
                     document.getElementById('cardErrors').textContent = err.message || 'カード情報を確認してください';
                 });
             });
+            
+            // 業種「その他」選択時の表示制御
+            document.getElementById('modalIndustry').addEventListener('change', function() {
+                const otherGroup = document.getElementById('modalOtherIndustryGroup');
+                if (this.value === 'other') {
+                    otherGroup.style.display = 'block';
+                } else {
+                    otherGroup.style.display = 'none';
+                }
+            });
         });
 
         // 決済送信
-        async function submitPayment(token, email, url) {
+        async function submitPayment(token, email, url, industry) {
             try {
                 const response = await fetch('/api/checkout', {
                     method: 'POST',
@@ -738,6 +777,7 @@
                         url: url,
                         payjpToken: token,
                         email: email,
+                        industry: industry,
                         visitorId: visitorId
                     })
                 });
