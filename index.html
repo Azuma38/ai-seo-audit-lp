@@ -10,7 +10,7 @@
     <!-- FingerprintJS -->
     <script src="https://openfpcdn.io/fingerprintjs/v4.js"></script>
     <!-- PAY.JP v2 -->
-    <script src="https://js.pay.jp/v2/payjp.js"></script>
+    <script src="https://js.pay.jp/v2/payjp.js" id="payjp-script"></script>
     <style>
         * {
             margin: 0;
@@ -590,9 +590,29 @@
             try {
                 Payjp.setPublicKey('pk_test_131a69a2129132d86012f6e1');
                 payjpReady = true;
-                console.log('Payjp initialized');
+                console.log('Payjp initialized successfully');
             } catch (e) {
                 console.error('Payjp init error:', e);
+            }
+        }
+
+        // 確実にPayjpを初期化
+        function ensurePayjpReady() {
+            if (typeof Payjp !== 'undefined') {
+                initPayjp();
+            } else {
+                // ポーリングで待機
+                let attempts = 0;
+                const checkInterval = setInterval(function() {
+                    attempts++;
+                    if (typeof Payjp !== 'undefined') {
+                        clearInterval(checkInterval);
+                        initPayjp();
+                    } else if (attempts > 50) {
+                        clearInterval(checkInterval);
+                        console.error('Payjp failed to load after 5 seconds');
+                    }
+                }, 100);
             }
         }
 
@@ -609,31 +629,52 @@
             document.getElementById('paymentModal').style.display = 'flex';
 
             // PAY.JPカード要素を作成
-            if (payjpReady) {
-                try {
-                    // 古い要素をクリア
-                    document.getElementById('cardElement').innerHTML = '';
-                    
-                    // 新しいelementsとcardを作成
-                    payjpElements = Payjp.elements();
-                    payjpCard = payjpElements.create('card', {
-                        style: {
-                            base: {
-                                fontSize: '16px',
-                                color: '#333',
-                                '::placeholder': { color: '#aab7c4' }
-                            },
-                            invalid: { color: '#e53e3e' }
-                        }
-                    });
-                    payjpCard.mount('#cardElement');
-                    console.log('Card mounted successfully');
-                } catch (e) {
-                    console.error('Card mount error:', e);
-                    document.getElementById('cardElement').innerHTML = '<p style="color: red;">カード入力欄の読み込みに失敗しました。ページを再読み込みしてください。</p>';
-                }
+            createCardElement();
+        }
+
+        // カード要素を作成（Pay.jp準備待機付き）
+        function createCardElement() {
+            if (!payjpReady) {
+                document.getElementById('cardElement').innerHTML = '<p style="color: #666;">カード入力欄を準備中...</p>';
+                let attempts = 0;
+                const checkInterval = setInterval(function() {
+                    attempts++;
+                    if (payjpReady) {
+                        clearInterval(checkInterval);
+                        mountCardElement();
+                    } else if (attempts > 30) {
+                        clearInterval(checkInterval);
+                        document.getElementById('cardElement').innerHTML = '<p style="color: red;">カード入力欄の読み込みに失敗しました。ページを再読み込みしてください。</p>';
+                    }
+                }, 100);
             } else {
-                console.error('Payjp not ready');
+                mountCardElement();
+            }
+        }
+
+        // カード要素をマウント
+        function mountCardElement() {
+            try {
+                // 古い要素をクリア
+                document.getElementById('cardElement').innerHTML = '';
+                
+                // 新しいelementsとcardを作成
+                payjpElements = Payjp.elements();
+                payjpCard = payjpElements.create('card', {
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            color: '#333',
+                            '::placeholder': { color: '#aab7c4' }
+                        },
+                        invalid: { color: '#e53e3e' }
+                    }
+                });
+                payjpCard.mount('#cardElement');
+                console.log('Card mounted successfully');
+            } catch (e) {
+                console.error('Card mount error:', e);
+                document.getElementById('cardElement').innerHTML = '<p style="color: red;">カード入力欄の読み込みに失敗しました。ページを再読み込みしてください。</p>';
             }
         }
 
@@ -757,8 +798,10 @@
             }
         });
         
-        // PAY.JP初期化開始
-        initPayjp();
+        // DOMContentLoadedで初期化開始
+        document.addEventListener('DOMContentLoaded', function() {
+            ensurePayjpReady();
+        });
     </script>
 </body>
 </html>
