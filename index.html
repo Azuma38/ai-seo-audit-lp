@@ -569,6 +569,55 @@
         </div>
     </div>
 
+    <!-- 問い合わせモーダル（ビジネスプラン用） -->
+    <div id="contactModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: #fff; padding: 40px; border-radius: 12px; max-width: 500px; width: 90%; position: relative; max-height: 90vh; overflow-y: auto;">
+            <button onclick="closeContactModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            <h3 style="margin-bottom: 10px; font-size: 1.3rem;">ビジネスプランお問い合わせ</h3>
+            <p style="margin-bottom: 20px; color: #666; font-size: 0.95rem;">¥79,800（税込）/ 月額<br>専任担当者が最適なプランをご提案します。</p>
+            
+            <div class="form-group">
+                <label for="contactUrl">監査対象URL <span style="color: #e11d48;">*</span></label>
+                <input type="url" id="contactUrl" placeholder="https://example.com" required style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; margin-bottom: 15px;">
+            </div>
+            
+            <div class="form-group">
+                <label for="contactCompany">会社名・お名前 <span style="color: #e11d48;">*</span></label>
+                <input type="text" id="contactCompany" placeholder="株式会社〇〇 山田太郎" required style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; margin-bottom: 15px;">
+            </div>
+            
+            <div class="form-group">
+                <label for="contactEmail">メールアドレス <span style="color: #e11d48;">*</span></label>
+                <input type="email" id="contactEmail" placeholder="your@email.com" required style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; margin-bottom: 15px;">
+            </div>
+            
+            <div class="form-group">
+                <label for="contactBudget">予算感</label>
+                <select id="contactBudget" style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; margin-bottom: 15px; background: #fff;">
+                    <option value="">選択してください</option>
+                    <option value="5-10">月5〜10万円程度</option>
+                    <option value="10-30">月10〜30万円程度</option>
+                    <option value="30-50">月30〜50万円程度</option>
+                    <option value="50+">月50万円以上</option>
+                    <option value="undecided">相談して決めたい</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="contactNeeds">ご要望・目的</label>
+                <textarea id="contactNeeds" placeholder="AI検索での表示順位を上げたい、競合に勝ちたいなど" rows="4" style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; margin-bottom: 15px; resize: vertical;"></textarea>
+            </div>
+            
+            <div id="contactErrors" style="color: #e53e3e; font-size: 0.9rem; margin-bottom: 10px;"></div>
+            
+            <button id="submitContact" style="width: 100%; padding: 14px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer;">お問い合わせ送信</button>
+            
+            <p style="font-size: 0.85rem; color: #888; margin-top: 15px; text-align: center;">
+                24時間以内にご連絡いたします
+            </p>
+        </div>
+    </div>
+
     <script>
         // グローバル変数
         let currentPlan = null;
@@ -645,7 +694,7 @@
         // モーダルを開く
         function openPaymentModal(plan) {
             if (plan === 'business') {
-                alert('ビジネスプランはお問い合わせください。\nTelegram: @azuma38');
+                openContactModal();
                 return;
             }
 
@@ -663,6 +712,23 @@
 
             // PAY.JPカード要素を作成
             createCardElement();
+        }
+
+        // 問い合わせモーダルを開く
+        function openContactModal() {
+            // メインフォームのURLがあればコピー
+            const mainUrl = document.getElementById('url')?.value;
+            if (mainUrl) {
+                document.getElementById('contactUrl').value = mainUrl;
+            }
+            document.getElementById('contactModal').style.display = 'flex';
+        }
+
+        // 問い合わせモーダルを閉じる
+        function closeContactModal() {
+            document.getElementById('contactModal').style.display = 'none';
+            document.getElementById('contactErrors').textContent = '';
+        }
         }
 
         // カード要素を作成（Pay.jp準備待機付き）
@@ -764,6 +830,34 @@
                     otherGroup.style.display = 'none';
                 }
             });
+            
+            // 問い合わせ送信（ビジネスプラン）
+            document.getElementById('submitContact').addEventListener('click', function() {
+                const url = document.getElementById('contactUrl').value;
+                const company = document.getElementById('contactCompany').value;
+                const email = document.getElementById('contactEmail').value;
+                
+                if (!url) {
+                    document.getElementById('contactErrors').textContent = '監査対象URLを入力してください';
+                    return;
+                }
+                if (!company) {
+                    document.getElementById('contactErrors').textContent = '会社名・お名前を入力してください';
+                    return;
+                }
+                if (!email) {
+                    document.getElementById('contactErrors').textContent = 'メールアドレスを入力してください';
+                    return;
+                }
+                
+                submitContact({
+                    url: url,
+                    company: company,
+                    email: email,
+                    budget: document.getElementById('contactBudget').value,
+                    needs: document.getElementById('contactNeeds').value
+                });
+            });
         });
 
         // 決済送信
@@ -792,6 +886,37 @@
                 }
             } catch (error) {
                 document.getElementById('cardErrors').textContent = error.message;
+            }
+        }
+
+        // 問い合わせ送信（ビジネスプラン）
+        async function submitContact(data) {
+            try {
+                document.getElementById('submitContact').disabled = true;
+                document.getElementById('submitContact').textContent = '送信中...';
+                
+                const response = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plan: 'business',
+                        ...data
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    closeContactModal();
+                    alert('✓ お問い合わせ受け付けました\n\n24時間以内にご連絡いたします。');
+                } else {
+                    throw new Error(result.error || '送信エラー');
+                }
+            } catch (error) {
+                document.getElementById('contactErrors').textContent = error.message;
+            } finally {
+                document.getElementById('submitContact').disabled = false;
+                document.getElementById('submitContact').textContent = 'お問い合わせ送信';
             }
         }
 
