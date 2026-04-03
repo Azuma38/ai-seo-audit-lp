@@ -561,6 +561,7 @@
             <div id="cardErrors" style="color: #e53e3e; font-size: 0.9rem; margin-top: 10px;"></div>
             
             <button id="submitPayment" style="width: 100%; padding: 14px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; margin-top: 20px;">決済する</button>
+            <p id="paymentNotice" style="font-size: 0.85rem; color: #e11d48; margin-top: 10px; text-align: center; display: none;">※ ボタンは1回のみクリックしてください。決済完了まで数秒お待ちください。</p>
             
             <p style="font-size: 0.85rem; color: #888; margin-top: 15px; text-align: center;">
                 テストカード: 4242424242424242<br>
@@ -720,6 +721,11 @@
         // 決済実行
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('submitPayment').addEventListener('click', function() {
+                // ダブルクリック防止
+                const submitBtn = document.getElementById('submitPayment');
+                const notice = document.getElementById('paymentNotice');
+                if (submitBtn.disabled) return;
+                
                 const url = document.getElementById('modalUrl').value;
                 const email = document.getElementById('modalEmail').value;
                 
@@ -731,6 +737,12 @@
                     document.getElementById('cardErrors').textContent = 'メールアドレスを入力してください';
                     return;
                 }
+                
+                // ボタン無効化 & ローディング表示
+                submitBtn.disabled = true;
+                submitBtn.textContent = '処理中...';
+                submitBtn.style.background = '#9ca3af';
+                notice.style.display = 'block';
 
                 // 業種取得
                 let industry = document.getElementById('modalIndustry').value;
@@ -741,11 +753,21 @@
                 // v2: payjpInstanceからトークン作成
                 payjpInstance.createToken(payjpCard).then(function(response) {
                     if (response.error) {
+                        // エラー時はボタン復元
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = '決済する';
+                        submitBtn.style.background = '#2563eb';
+                        notice.style.display = 'none';
                         document.getElementById('cardErrors').textContent = response.error.message || 'カード情報を確認してください';
                     } else {
-                        submitPayment(response.id, email, url, industry);
+                        submitPayment(response.id, email, url, industry, submitBtn);
                     }
                 }).catch(function(err) {
+                    // エラー時はボタン復元
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '決済する';
+                    submitBtn.style.background = '#2563eb';
+                    notice.style.display = 'none';
                     document.getElementById('cardErrors').textContent = err.message || 'カード情報を確認してください';
                 });
             });
@@ -762,7 +784,8 @@
         });
 
         // 決済送信
-        async function submitPayment(token, email, url, industry) {
+        async function submitPayment(token, email, url, industry, submitBtn) {
+            const notice = document.getElementById('paymentNotice');
             try {
                 const response = await fetch('/api/checkout', {
                     method: 'POST',
@@ -780,12 +803,22 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    closePaymentModal();
-                    alert('✓ 決済完了\n\n監査リクエストを受け付けました。\n結果は24時間以内にお送りします。');
+                    submitBtn.textContent = '✓ 申込み完了';
+                    submitBtn.style.background = '#10b981';
+                    notice.style.display = 'none';
+                    setTimeout(() => {
+                        closePaymentModal();
+                        alert('監査リクエストを受け付けました。\n結果は24時間以内にお送りします。');
+                    }, 500);
                 } else {
                     throw new Error(result.error || '決済エラー');
                 }
             } catch (error) {
+                // エラー時はボタン復元
+                submitBtn.disabled = false;
+                submitBtn.textContent = '決済する';
+                submitBtn.style.background = '#2563eb';
+                notice.style.display = 'none';
                 document.getElementById('cardErrors').textContent = error.message;
             }
         }
