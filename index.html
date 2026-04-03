@@ -518,10 +518,15 @@
 
     <!-- 決済モーダル -->
     <div id="paymentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-        <div style="background: #fff; padding: 40px; border-radius: 12px; max-width: 450px; width: 90%; position: relative;">
+        <div style="background: #fff; padding: 40px; border-radius: 12px; max-width: 480px; width: 90%; position: relative; max-height: 90vh; overflow-y: auto;">
             <button onclick="closePaymentModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
             <h3 style="margin-bottom: 20px; font-size: 1.3rem;" id="modalTitle">お試しプラン</h3>
             <p style="margin-bottom: 20px; color: #666; font-size: 1.2rem; font-weight: bold;" id="modalPrice">¥4,980</p>
+            
+            <div class="form-group">
+                <label for="modalUrl">監査対象URL <span style="color: #e11d48;">*</span></label>
+                <input type="url" id="modalUrl" placeholder="https://example.com" required style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; margin-bottom: 15px;">
+            </div>
             
             <div class="form-group">
                 <label for="modalEmail">メールアドレス <span style="color: #e11d48;">*</span></label>
@@ -627,6 +632,13 @@
             currentPlan = plan;
             document.getElementById('modalTitle').textContent = planNames[plan];
             document.getElementById('modalPrice').textContent = '¥' + planPrices[plan].toLocaleString();
+            
+            // メインフォームのURLがあればコピー
+            const mainUrl = document.getElementById('url')?.value;
+            if (mainUrl) {
+                document.getElementById('modalUrl').value = mainUrl;
+            }
+            
             document.getElementById('paymentModal').style.display = 'flex';
 
             // PAY.JPカード要素を作成
@@ -683,21 +695,22 @@
         function closePaymentModal() {
             document.getElementById('paymentModal').style.display = 'none';
             document.getElementById('cardErrors').textContent = '';
+            document.getElementById('modalUrl').value = '';
+            document.getElementById('modalEmail').value = '';
         }
 
         // 決済実行
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('submitPayment').addEventListener('click', function() {
+                const url = document.getElementById('modalUrl').value;
                 const email = document.getElementById('modalEmail').value;
-                if (!email) {
-                    document.getElementById('cardErrors').textContent = 'メールアドレスを入力してください';
+                
+                if (!url) {
+                    document.getElementById('cardErrors').textContent = '監査対象URLを入力してください';
                     return;
                 }
-                
-                // URL入力チェック
-                const url = document.getElementById('url').value;
-                if (!url) {
-                    document.getElementById('cardErrors').textContent = '監査対象URLを先に入力してください';
+                if (!email) {
+                    document.getElementById('cardErrors').textContent = 'メールアドレスを入力してください';
                     return;
                 }
 
@@ -706,7 +719,7 @@
                     if (response.error) {
                         document.getElementById('cardErrors').textContent = response.error.message || 'カード情報を確認してください';
                     } else {
-                        submitPayment(response.id, email);
+                        submitPayment(response.id, email, url);
                     }
                 }).catch(function(err) {
                     document.getElementById('cardErrors').textContent = err.message || 'カード情報を確認してください';
@@ -715,11 +728,8 @@
         });
 
         // 決済送信
-        async function submitPayment(token, email) {
+        async function submitPayment(token, email, url) {
             try {
-                // メインフォームからURLを取得
-                const url = document.getElementById('url').value;
-                
                 const response = await fetch('/api/checkout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
