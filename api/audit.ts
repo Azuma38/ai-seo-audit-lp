@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 interface AuditRequest {
+  plan?: string;
   url: string;
   email: string;
   industry?: string;
@@ -33,7 +34,8 @@ export default async function handler(
   }
 
   try {
-    const { url, email, industry, recaptchaToken, visitorId } = req.body as AuditRequest;
+    const { plan, url, email, industry, recaptchaToken, visitorId } = req.body as AuditRequest;
+    const planType = plan || 'free';
 
     // Validation
     if (!url || !email) {
@@ -87,14 +89,22 @@ export default async function handler(
     const telegramChatId = process.env.TELEGRAM_CHAT_ID;
 
     if (telegramToken && telegramChatId) {
-      const message = `🔍 新規SEO監査リクエスト
+      const planNames: Record<string, string> = {
+        free: '無料診断',
+        trial: 'お試し',
+        standard: 'スタンダード',
+        business: 'ビジネス'
+      };
 
+      const message = `🔍 SEO監査リクエスト
+
+プラン: ${planNames[planType] || '無料診断'}
 URL: ${url}
 Email: ${email}
 業種: ${industry || '未選択'}
 
 ---
-対応: Optimusでレポート生成 → Azumaレビュー`;
+対応: Optimus spawn (plan: ${planType}) → レポート生成 → Azumaレビュー`;
 
       await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
         method: 'POST',

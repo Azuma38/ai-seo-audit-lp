@@ -149,7 +149,7 @@ Email: ${email}
 決済ID: ${chargeResult.id}
 
 ---
-対応: Optimusでレポート生成 → Azumaレビュー → Gmail送信`;
+対応: Optimus spawn (plan: ${plan}) → レポート生成 → Azumaレビュー → Gmail送信`;
 
       await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
         method: 'POST',
