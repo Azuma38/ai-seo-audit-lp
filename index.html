@@ -515,12 +515,46 @@
             </div>
         </div>
     </section>
-    
+
+    <section class="form-section" id="contact" style="background: #f0f4ff;">
+        <div class="container">
+            <h2>お問い合わせ</h2>
+            <p style="margin-bottom: 24px; color: #555;">サービスに関するご質問やご要望がございましたら、お気軽にお問い合わせください。</p>
+            <form id="inquiryForm" style="max-width: 560px; margin: 0 auto;">
+                <div class="form-group">
+                    <label for="inq-name">お名前 <span style="color: #e11d48;">*</span></label>
+                    <input type="text" id="inq-name" name="name" required maxlength="100" placeholder="山田 太郎">
+                </div>
+                <div class="form-group">
+                    <label for="inq-email">メールアドレス <span style="color: #e11d48;">*</span></label>
+                    <input type="email" id="inq-email" name="email" required maxlength="254" placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="inq-subject">お問い合わせ種別 <span style="color: #e11d48;">*</span></label>
+                    <select id="inq-subject" name="subject" required>
+                        <option value="">選択してください</option>
+                        <option value="サービスについて">サービスについて</option>
+                        <option value="料金について">料金について</option>
+                        <option value="監査レポートについて">監査レポートについて</option>
+                        <option value="技術的なご質問">技術的なご質問</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="inq-message">お問い合わせ内容 <span style="color: #e11d48;">*</span></label>
+                    <textarea id="inq-message" name="message" required maxlength="2000" rows="5" placeholder="ご質問やご要望をお書きください"></textarea>
+                </div>
+                <button type="submit" class="btn" id="inquirySubmitBtn" style="width: 100%; margin-top: 12px;">送信する</button>
+            </form>
+        </div>
+    </section>
+
     <footer>
         <div class="container">
             <p>
                 <a href="/terms.html" style="color: #2563eb; text-decoration: none; margin-right: 16px;">利用規約</a>
-                <a href="/disclaimer.html" style="color: #2563eb; text-decoration: none;">免責事項</a>
+                <a href="/disclaimer.html" style="color: #2563eb; text-decoration: none; margin-right: 16px;">免責事項</a>
+                <a href="#contact" style="color: #2563eb; text-decoration: none;">お問い合わせ</a>
             </p>
             <p>&copy; 2026 AI SEO監査. All rights reserved.</p>
         </div>
@@ -907,7 +941,52 @@
         // DOMContentLoadedで初期化開始
         document.addEventListener('DOMContentLoaded', function() {
             ensurePayjpReady();
+            initInquiryForm();
         });
+
+        // === Inquiry Form ===
+        function initInquiryForm() {
+            const form = document.getElementById('inquiryForm');
+            if (!form) return;
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const btn = document.getElementById('inquirySubmitBtn');
+                btn.disabled = true;
+                btn.textContent = '送信中...';
+                try {
+                    let recaptchaToken = '';
+                    if (typeof grecaptcha !== 'undefined') {
+                        recaptchaToken = await grecaptcha.execute('6LeZ4aAsAAAAAI3uD7Z2j-MGjRWAVARoy32vgumz', {action: 'inquiry'});
+                    }
+                    const res = await fetch('/api/inquiry', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: form.name.value.trim(),
+                            email: form.email.value.trim(),
+                            subject: form.subject.value,
+                            message: form.message.value.trim(),
+                            recaptchaToken
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        btn.textContent = '✓ 送信完了';
+                        btn.style.background = '#10b981';
+                        alert('お問い合わせを受け付けました。\n確認メールをお送りします。');
+                        form.reset();
+                    } else {
+                        throw new Error(data.error || '送信に失敗しました');
+                    }
+                } catch (err) {
+                    alert('送信に失敗しました: ' + err.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = '送信する';
+                    btn.style.background = '';
+                }
+            });
+        }
     </script>
 </body>
 </html>
