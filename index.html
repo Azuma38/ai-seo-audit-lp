@@ -368,7 +368,7 @@
     <section class="hero">
         <div class="container">
             <h1>サイトの課題を<span>AI</span>が高速監査</h1>
-            <p>SEO + LLMO（AI検索最適化）に対応した自動監査。<br>監査は数分で完了。結果は24時間以内にお届けします。</p>
+            <p>SEO + LLMO（AI検索最適化）に対応した自動監査。<br>監査は数分で完了。結果は12時間以内にお届けします。</p>
             <a href="#free-audit" class="cta-btn">今すぐ無料診断</a>
         </div>
     </section>
@@ -453,7 +453,7 @@
     <section class="form-section" id="free-audit">
         <div class="container">
             <h2>無料診断を始める</h2>
-            <p>サイトURLを入力するだけ。監査は数分で完了し、結果は24時間以内にメールでお届けします。</p>
+            <p>サイトURLを入力するだけ。監査は数分で完了し、結果は12時間以内にメールでお届けします。</p>
             <p style="font-size: 0.9rem; color: #888; margin-bottom: 15px;">※監査自体はAIが高速で処理しますが、専門家による最終確認を経て結果をお届けするため、ご報告までにお時間をいただいております。</p>
             <p style="font-size: 0.85rem; color: #555; margin-bottom: 30px; padding: 12px; background: #f0f7ff; border-radius: 6px; border-left: 3px solid #2563eb;">📌 <strong>無料診断:</strong> ご指定のURL1ページを監査します。<br>📌 <strong>有料プラン:</strong> トップページのURLをご提出ください。sitemapから主要ページを自動で検出し、複数ページを横断的に監査します。</p>
             <form class="audit-form" id="auditForm">
@@ -503,7 +503,7 @@
             </div>
             <div class="faq-item">
                 <h3>監査結果はどのくらいで届きますか？</h3>
-                <p>監査自体はAIが数分で完了します。結果は専門家による確認を経て、通常24時間以内にメールでお届けします。</p>
+                <p>監査自体はAIが数分で完了します。結果は専門家による確認を経て、通常12時間以内にメールでお届けします。</p>
             </div>
             <div class="faq-item">
                 <h3>WordPress以外のサイトも監査できますか？</h3>
@@ -815,7 +815,7 @@
                     notice.style.display = 'none';
                     setTimeout(() => {
                         closePaymentModal();
-                        alert('監査リクエストを受け付けました。\n結果は24時間以内にお送りします。');
+                        alert('監査リクエストを受け付けました。\n結果は12時間以内にお送りします。');
                     }, 500);
                 } else {
                     throw new Error(result.error || '決済エラー');
@@ -889,7 +889,7 @@
                 if (result.success) {
                     submitBtn.textContent = '✓ 申込み完了';
                     submitBtn.style.background = '#10b981';
-                    alert('監査リクエストを受け付けました。\n結果は24時間以内にお送りします。');
+                    alert('監査リクエストを受け付けました。\n結果は12時間以内にお送りします。');
                 } else {
                     throw new Error(result.error || 'エラーが発生しました');
                 }
