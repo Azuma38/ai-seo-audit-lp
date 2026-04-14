@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ai-seo-lp.vercel.app/sitemap.xml
