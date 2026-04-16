@@ -649,6 +649,27 @@
             }
         })();
 
+        // 3Dセキュア認証後のコールバック処理
+        (function handle3DSecureCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const threeDSecureToken = urlParams.get('three_d_secure_token');
+            
+            if (threeDSecureToken) {
+                // 3Dセキュア認証が完了した
+                const pending = sessionStorage.getItem('pendingPayment');
+                if (pending) {
+                    const paymentData = JSON.parse(pending);
+                    // 保留中の決済を実行
+                    sessionStorage.removeItem('pendingPayment');
+                    // URLパラメータを削除
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    // 決済を続行
+                    currentPlan = paymentData.plan;
+                    submitPayment(threeDSecureToken, paymentData.email, paymentData.url, paymentData.industry, null);
+                }
+            }
+        })();
+
         // PAY.JP v2 インスタンス
         let payjpInstance = null;
         let payjpCard = null;
@@ -798,8 +819,10 @@
                     industry = document.getElementById('modalOtherIndustry').value || 'その他';
                 }
 
-                // v2: payjpInstanceからトークン作成
-                payjpInstance.createToken(payjpCard).then(function(response) {
+                // v2: 3Dセキュア対応でトークン作成
+                payjpInstance.createToken(payjpCard, {
+                    three_d_secure: true
+                }).then(function(response) {
                     if (response.error) {
                         // エラー時はボタン復元
                         submitBtn.disabled = false;
@@ -807,7 +830,20 @@
                         submitBtn.style.background = '#2563eb';
                         notice.style.display = 'none';
                         document.getElementById('cardErrors').textContent = response.error.message || 'カード情報を確認してください';
+                    } else if (response.three_d_secure_url) {
+                        // 3Dセキュア認証が必要な場合
+                        // 認証完了後に戻ってくるため、状態を保存
+                        sessionStorage.setItem('pendingPayment', JSON.stringify({
+                            token: response.id,
+                            email: email,
+                            url: url,
+                            industry: industry,
+                            plan: currentPlan
+                        }));
+                        // 3Dセキュア認証ページへリダイレクト
+                        window.location.href = response.three_d_secure_url;
                     } else {
+                        // 3Dセキュア不要（カード会社によってはスキップされる）
                         submitPayment(response.id, email, url, industry, submitBtn);
                     }
                 }).catch(function(err) {
@@ -834,6 +870,9 @@
         // 決済送信
         async function submitPayment(token, email, url, industry, submitBtn) {
             const notice = document.getElementById('paymentNotice');
+            // 3Dセキュアコールバック時はsubmitBtnがnullの場合がある
+            const btn = submitBtn || document.getElementById('modalSubmitBtn');
+            
             try {
                 const response = await fetch('/api/checkout', {
                     method: 'POST',
@@ -851,8 +890,10 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    submitBtn.textContent = '✓ 申込み完了';
-                    submitBtn.style.background = '#10b981';
+                    if (btn) {
+                        btn.textContent = '✓ 申込み完了';
+                        btn.style.background = '#10b981';
+                    }
                     notice.style.display = 'none';
                     setTimeout(() => {
                         closePaymentModal();
@@ -863,9 +904,11 @@
                 }
             } catch (error) {
                 // エラー時はボタン復元
-                submitBtn.disabled = false;
-                submitBtn.textContent = '決済する';
-                submitBtn.style.background = '#2563eb';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '決済する';
+                    btn.style.background = '#2563eb';
+                }
                 notice.style.display = 'none';
                 document.getElementById('cardErrors').textContent = error.message;
             }
