@@ -4,7 +4,8 @@ interface AuditRequest {
   plan?: string;
   url: string;
   email: string;
-  name?: string;
+  nameKanji?: string;
+  nameKana?: string;
   industry?: string;
   recaptchaToken?: string;
   visitorId?: string;
@@ -35,7 +36,7 @@ export default async function handler(
   }
 
   try {
-    const { plan, url, email, name, industry, recaptchaToken, visitorId } = req.body as AuditRequest;
+    const { plan, url, email, nameKanji, nameKana, industry, recaptchaToken, visitorId } = req.body as AuditRequest;
     const planType = plan || 'free';
 
     // Validation
@@ -101,7 +102,7 @@ export default async function handler(
 
 プラン: ${planNames[planType] || '無料診断'}
 URL: ${url}
-お名前: ${name || '未入力'}
+お名前: ${nameKanji || '未入力'} (${nameKana || '未入力'})
 Email: ${email}
 業種: ${industry || '未選択'}
 

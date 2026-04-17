@@ -467,8 +467,12 @@
                     <input type="email" id="email" name="email" placeholder="your@email.com" required>
                 </div>
                 <div class="form-group">
-                    <label for="name">お名前（漢字・ひらがな）</label>
-                    <input type="text" id="name" name="name" placeholder="山田 太郎" required>
+                    <label for="nameKanji">お名前（漢字）</label>
+                    <input type="text" id="nameKanji" name="nameKanji" placeholder="山田 太郎" required>
+                </div>
+                <div class="form-group">
+                    <label for="nameKana">お名前（ひらがな）</label>
+                    <input type="text" id="nameKana" name="nameKana" placeholder="やまだ たろう" required>
                 </div>
                 <div class="form-group">
                     <label for="industry">業種 <span style="color: #e11d48;">*</span></label>
@@ -586,8 +590,12 @@
             </div>
             
             <div class="form-group">
-                <label for="modalName">お名前（漢字・ひらがな） <span style="color: #e11d48;">*</span></label>
-                <input type="text" id="modalName" placeholder="山田 太郎" required style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; margin-bottom: 5px;">
+                <label for="modalNameKanji">お名前（漢字） <span style="color: #e11d48;">*</span></label>
+                <input type="text" id="modalNameKanji" placeholder="山田 太郎" required style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; margin-bottom: 5px;">
+            </div>
+            <div class="form-group">
+                <label for="modalNameKana">お名前（ひらがな） <span style="color: #e11d48;">*</span></label>
+                <input type="text" id="modalNameKana" placeholder="やまだ たろう" required style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 1rem; margin-bottom: 5px;">
                 <p style="font-size: 0.8rem; color: #666; margin-bottom: 15px;">※レポート送信時の宛名として使用します</p>
             </div>
             
@@ -680,7 +688,7 @@
                     window.history.replaceState({}, document.title, window.location.pathname);
                     // 決済を続行
                     currentPlan = paymentData.plan;
-                    submitPayment(threeDSecureToken, paymentData.email, paymentData.name, paymentData.url, paymentData.industry, null);
+                    submitPayment(threeDSecureToken, paymentData.email, paymentData.nameKanji, paymentData.nameKana, paymentData.url, paymentData.industry, null);
                 }
             }
         })();
@@ -812,7 +820,8 @@
                 
                 const url = document.getElementById('modalUrl').value;
                 const email = document.getElementById('modalEmail').value;
-                const name = document.getElementById('modalName').value;
+                const nameKanji = document.getElementById('modalNameKanji').value;
+                const nameKana = document.getElementById('modalNameKana').value;
                 const cardName = document.getElementById('modalCardName').value;
                 
                 if (!url) {
@@ -823,8 +832,12 @@
                     document.getElementById('cardErrors').textContent = 'メールアドレスを入力してください';
                     return;
                 }
-                if (!name) {
-                    document.getElementById('cardErrors').textContent = 'お名前を入力してください';
+                if (!nameKanji) {
+                    document.getElementById('cardErrors').textContent = 'お名前（漢字）を入力してください';
+                    return;
+                }
+                if (!nameKana) {
+                    document.getElementById('cardErrors').textContent = 'お名前（ひらがな）を入力してください';
                     return;
                 }
                 if (!cardName) {
@@ -861,7 +874,8 @@
                         sessionStorage.setItem('pendingPayment', JSON.stringify({
                             token: response.id,
                             email: email,
-                            name: name,
+                            nameKanji: nameKanji,
+                            nameKana: nameKana,
                             url: url,
                             industry: industry,
                             plan: currentPlan
@@ -870,7 +884,7 @@
                         window.location.href = response.three_d_secure_url;
                     } else {
                         // 3Dセキュア不要（カード会社によってはスキップされる）
-                        submitPayment(response.id, email, name, url, industry, submitBtn);
+                        submitPayment(response.id, email, nameKanji, nameKana, url, industry, submitBtn);
                     }
                 }).catch(function(err) {
                     // エラー時はボタン復元
@@ -894,7 +908,7 @@
         });
 
         // 決済送信
-        async function submitPayment(token, email, name, url, industry, submitBtn) {
+        async function submitPayment(token, email, nameKanji, nameKana, url, industry, submitBtn) {
             const notice = document.getElementById('paymentNotice');
             // 3Dセキュアコールバック時はsubmitBtnがnullの場合がある
             const btn = submitBtn || document.getElementById('modalSubmitBtn');
@@ -908,7 +922,8 @@
                         url: url,
                         payjpToken: token,
                         email: email,
-                        name: name,
+                        nameKanji: nameKanji,
+                        nameKana: nameKana,
                         industry: industry,
                         visitorId: visitorId
                     })
@@ -964,7 +979,8 @@
 
             const url = document.getElementById('url').value;
             const email = document.getElementById('email').value;
-            const name = document.getElementById('name').value;
+            const nameKanji = document.getElementById('nameKanji').value;
+            const nameKana = document.getElementById('nameKana').value;
             let industry = document.getElementById('industry').value;
             
             // その他の場合は入力値を使用
@@ -990,7 +1006,8 @@
                         plan: 'free',
                         url: url,
                         email: email,
-                        name: name,
+                        nameKanji: nameKanji,
+                        nameKana: nameKana,
                         industry: industry,
                         recaptchaToken: recaptchaToken,
                         visitorId: visitorId
