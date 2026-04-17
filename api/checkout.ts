@@ -4,6 +4,7 @@ interface CheckoutRequest {
   plan: string;
   url: string;
   email: string;
+  name?: string;
   industry?: string;
   recaptchaToken?: string;
   visitorId?: string;
@@ -41,7 +42,7 @@ export default async function handler(
   }
 
   try {
-    const { plan, url, email, industry, recaptchaToken, visitorId, payjpToken } = req.body as CheckoutRequest;
+    const { plan, url, email, name, industry, recaptchaToken, visitorId, payjpToken } = req.body as CheckoutRequest;
 
     // Validation
     if (!plan || !url || !email) {
@@ -144,6 +145,7 @@ export default async function handler(
 
 プラン: ${planNames[plan]}（¥${amount.toLocaleString()}）
 URL: ${url}
+お名前: ${name || '未入力'}
 Email: ${email}
 業種: ${industry || '未選択'}
 決済ID: ${chargeResult.id}
